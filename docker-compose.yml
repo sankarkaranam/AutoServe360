@@ -1,0 +1,40 @@
+
+version: "3.9"
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: autoserve360
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    environment:
+      - DB_URL=postgresql+asyncpg://postgres:postgres@db:5432/autoserve360
+      - JWT_SECRET=dev_secret_change
+      - CORS_ORIGINS=http://localhost:3000
+      - API_PREFIX=/api
+      - DB_SYNC_URL=postgresql://postgres:postgres@db:5432/autoserve360
+    depends_on:
+      - db
+    ports:
+      - "8000:8000"
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    environment:
+      - NEXT_PUBLIC_API_BASE=http://localhost:8000/api
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+
+volumes:
+  pgdata:

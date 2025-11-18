@@ -1,0 +1,70 @@
+{
+  "placeholderImages": [
+    {
+      "id": "user-avatar-1",
+      "description": "User avatar placeholder",
+      "imageUrl": "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxfHxwZXJzb24lMjBmYWNlfGVufDB8fHx8MTc2MTQxMDcyNnww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "person face"
+    },
+    {
+      "id": "engine-oil",
+      "description": "Motorcycle engine oil bottle",
+      "imageUrl": "https://images.unsplash.com/photo-1567016958860-87d898933af1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw5fHxlbmdpbmUlMjBvaWx8ZW58MHx8fHwxNzYxNTQ1OTE4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "engine oil"
+    },
+    {
+      "id": "oil-filter",
+      "description": "Motorcycle oil filter",
+      "imageUrl": "https://images.unsplash.com/photo-1626368167765-fd8a597f3770?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxvaWwlMjBmaWx0ZXJ8ZW58MHx8fHwxNzYxNDcxMDM4fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "oil filter"
+    },
+    {
+      "id": "air-filter",
+      "description": "Motorcycle air filter",
+      "imageUrl": "https://images.unsplash.com/photo-1713981234047-520a91c89a64?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHwxMHx8YWlyJTIwZmlsdGVyfGVufDB8fHx8MTc2MTUzNTQxM3ww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "air filter"
+    },
+    {
+      "id": "brake-pads",
+      "description": "Motorcycle brake pads",
+      "imageUrl": "https://images.unsplash.com/photo-1662074050260-1e015d6cd8c4?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw4fHxicmFrZSUyMHBhZHN8ZW58MHx8fHwxNzYxNTE0MDM5fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "brake pads"
+    },
+    {
+      "id": "chain-lube",
+      "description": "Motorcycle chain lubricant spray can",
+      "imageUrl": "https://images.unsplash.com/photo-1563320955-a077e861fa9c?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxjaGFpbiUyMGx1YmV8ZW58MHx8fHwxNzYxNTQ2OTAzfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "chain lube"
+    },
+    {
+      "id": "spark-plug",
+      "description": "Motorcycle spark plug",
+      "imageUrl": "https://images.unsplash.com/photo-1734570904896-ffaa96f4f5a1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxzcGFyayUyMHBsdWd8ZW58MHx8fHwxNzYxNDM4MTkzfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "spark plug"
+    },
+    {
+      "id": "helmet",
+      "description": "Motorcycle helmet",
+      "imageUrl": "https://images.unsplash.com/photo-1623038868323-7d39ec58eefe?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxtb3RvcmN5Y2xlJTIwaGVsbWV0fGVufDB8fHx8MTc2MTU0NjkwNHww&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "motorcycle helmet"
+    },
+    {
+      "id": "gloves",
+      "description": "Riding gloves",
+      "imageUrl": "https://images.unsplash.com/photo-1707561527531-15cb195ba0ea?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw1fHxyaWRpbmclMjBnbG92ZXN8ZW58MHx8fHwxNzYxNTQ2OTAzfDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "riding gloves"
+    },
+    {
+      "id": "motorcycle-chain",
+      "description": "Motorcycle chain",
+      "imageUrl": "https://images.unsplash.com/photo-1634071257217-eba3dc240438?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw2fHxtb3RvcmN5Y2xlJTIwY2hhaW58ZW58MHx8fHwxNzYxNDc1OTY1fDA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "motorcycle chain"
+    },
+    {
+      "id": "motorcycle-tire",
+      "description": "Motorcycle tire",
+      "imageUrl": "https://images.unsplash.com/photo-1721372142663-1e0f77ec9e26?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3NDE5ODJ8MHwxfHNlYXJjaHw0fHxtb3RvcmN5Y2xlJTIwdGlyZXxlbnwwfHx8fDE3NjE0NDY3MzF8MA&ixlib=rb-4.1.0&q=80&w=1080",
+      "imageHint": "motorcycle tire"
+    }
+  ]
+}
