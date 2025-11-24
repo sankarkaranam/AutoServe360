@@ -39,7 +39,7 @@ const formSchema = z.object({
     name: z.string().min(1, 'Name is required'),
     phone: z.string().optional(),
     email: z.string().email('Invalid email').or(z.literal('')).optional(),
-    source: z.string().default('WALK_IN'),
+    source: z.string().min(1, 'Source is required'),
     vehicle_of_interest: z.string().optional(),
     notes: z.string().optional(),
 });
@@ -160,7 +160,7 @@ export function AddLeadDialog({ open, onOpenChange, onSuccess }: AddLeadDialogPr
                             name="source"
                             render={({ field }) => (
                                 <FormItem>
-                                    <FormLabel>Source</FormLabel>
+                                    <FormLabel>Source *</FormLabel>
                                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                                         <FormControl>
                                             <SelectTrigger>
