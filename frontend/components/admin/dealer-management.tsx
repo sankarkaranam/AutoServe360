@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Loader2, RefreshCw, Pencil, Settings } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -47,84 +47,195 @@ import { AddDealerForm } from './add-dealer-form';
 import { EditDealerForm } from './edit-dealer-form';
 import { Skeleton } from '../ui/skeleton';
 import { useToast } from '@/hooks/use-toast';
+import { api } from '@/lib/api';
 
-const sampleDealers = [
-    { id: 'dealer-1', companyName: 'Prestige Motors', contactName: 'Rohan Sharma', contactEmail: 'rohan@example.com', subscriptionPlanId: 'premium', status: 'Active', expiryDate: '2025-07-20T00:00:00.000Z' },
-    { id: 'dealer-2', companyName: 'Galaxy Auto', contactName: 'Priya Singh', contactEmail: 'priya@example.com', subscriptionPlanId: 'standard', status: 'Active', expiryDate: '2025-06-15T00:00:00.000Z' },
-    { id: 'dealer-3', companyName: 'Sunrise Cars', contactName: 'Amit Patel', contactEmail: 'amit@example.com', subscriptionPlanId: 'basic', status: 'Suspended', expiryDate: '2024-08-01T00:00:00.000Z' },
-];
+interface Dealer {
+  tenant_id: string;
+  name: string;
+  plan: string;
+  status: string;
+  is_active: boolean;
+  created_at: string;
+  subscription_end: string | null;
+}
+
+import { FeatureManagementModal } from './feature-management-modal';
+// Icons already imported above
+
+// ... existing imports ...
 
 export function DealerManagement() {
   const [isAddDealerOpen, setIsAddDealerOpen] = useState(false);
   const [isEditDealerOpen, setIsEditDealerOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [selectedDealer, setSelectedDealer] = useState<any>(null);
-  const [dealers, setDealers] = useState(sampleDealers);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isFeatureModalOpen, setIsFeatureModalOpen] = useState(false);
+  const [selectedDealer, setSelectedDealer] = useState<Dealer | null>(null);
+  const [dealers, setDealers] = useState<Dealer[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const { toast } = useToast();
 
+  const fetchDealers = async () => {
+    try {
+      setIsRefreshing(true);
+      const data = await api<Dealer[]>('/api/v1/saas/dealers');
+      setDealers(data);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to load dealers. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDealers();
+  }, []);
+
   const handleResetPassword = async (email: string) => {
     toast({
-        title: 'Password Reset Email Sent',
-        description: `A password reset link has been sent to ${email}.`,
+      title: 'Password Reset Email Sent',
+      description: `A password reset link has been sent to ${email}.`,
     });
   };
 
-  const openEditDialog = (dealer: any) => {
+  const openEditDialog = (dealer: Dealer) => {
     setSelectedDealer(dealer);
     setIsEditDealerOpen(true);
   };
-  
-  const openDeleteDialog = (dealer: any) => {
+
+  const openDeleteDialog = (dealer: Dealer) => {
     setSelectedDealer(dealer);
     setIsDeleteDialogOpen(true);
   };
 
+  const openFeatureModal = (dealer: Dealer) => {
+    setSelectedDealer(dealer);
+    setIsFeatureModalOpen(true);
+  };
+
   const handleDeleteDealer = async () => {
     if (!selectedDealer) return;
-    setDealers(dealers.filter(d => d.id !== selectedDealer.id));
-    toast({
+
+    try {
+      await api(`/api/v1/saas/dealers/${selectedDealer.tenant_id}`, {
+        method: 'DELETE',
+      });
+
+      toast({
         title: 'Dealer Deleted',
-        description: `${selectedDealer.companyName} has been removed from the database.`,
-    });
-    setIsDeleteDialogOpen(false);
-    setSelectedDealer(null);
+        description: `${selectedDealer.name} has been removed from the database.`,
+      });
+
+      await fetchDealers();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to delete dealer. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsDeleteDialogOpen(false);
+      setSelectedDealer(null);
+    }
   };
-  
-  const handleSuspendDealer = async (dealer: any) => {
-    if (!dealer) return;
-    const newStatus = dealer.status === 'Active' ? 'Suspended' : 'Active';
-    setDealers(dealers.map(d => d.id === dealer.id ? { ...d, status: newStatus } : d));
-    toast({
-        title: `Dealer ${newStatus}`,
-        description: `${dealer.companyName}'s status has been updated.`,
-    });
+
+  const handleToggleStatus = async (dealer: Dealer) => {
+    try {
+      const newStatus = dealer.is_active ? false : true;
+
+      await api(`/api/v1/saas/dealers/${dealer.tenant_id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          is_active: newStatus,
+          status: newStatus ? 'active' : 'suspended'
+        }),
+      });
+
+      toast({
+        title: `Dealer ${newStatus ? 'Activated' : 'Suspended'}`,
+        description: `${dealer.name}'s status has been updated.`,
+      });
+
+      await fetchDealers();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update dealer status. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
-  
-   const handleAddDealer = (values: any) => {
-    const newDealer = {
-        id: `dealer-${Date.now()}`,
-        ...values,
-        status: 'Active',
-        expiryDate: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString(),
-    };
-    setDealers(prev => [newDealer, ...prev]);
-    setIsAddDealerOpen(false);
-     toast({
+
+  const handleAddDealer = async (values: any) => {
+    try {
+      await api('/api/v1/saas/dealers', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: values.companyName,
+          plan: values.subscriptionPlanId,
+          admin_email: values.contactEmail,
+          admin_password: 'password', // Default password, should be random or set by user
+          admin_name: values.contactName,
+        }),
+      });
+
+      toast({
         title: 'Dealer Added Successfully',
         description: `${values.companyName} has been created and a password setup email has been sent.`,
       });
+
+      setIsAddDealerOpen(false);
+      await fetchDealers();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to create dealer. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
-  const handleEditDealer = (values: any) => {
+  const handleEditDealer = async (values: any) => {
     if (!selectedDealer) return;
-    setDealers(dealers.map(d => d.id === selectedDealer.id ? { ...d, ...values } : d));
-    setIsEditDealerOpen(false);
-    toast({
+
+    try {
+      await api(`/api/v1/saas/dealers/${selectedDealer.tenant_id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          name: values.companyName,
+          plan: values.subscriptionPlanId,
+        }),
+      });
+
+      toast({
         title: 'Dealer Updated Successfully',
         description: `${values.companyName}'s details have been updated.`,
       });
+
+      setIsEditDealerOpen(false);
+      setSelectedDealer(null);
+      await fetchDealers();
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to update dealer. Please try again.',
+        variant: 'destructive',
+      });
+    }
+  };
+
+  const getDaysRemaining = (endDate: string | null) => {
+    if (!endDate) return null;
+    const end = new Date(endDate);
+    const now = new Date();
+    const diff = Math.ceil((end.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    return diff;
   };
 
   return (
@@ -138,16 +249,30 @@ export function DealerManagement() {
                 View, manage, and add dealers to the platform.
               </CardDescription>
             </div>
-            <Button
-              size="sm"
-              className="ml-auto gap-1"
-              onClick={() => setIsAddDealerOpen(true)}
-            >
-              <PlusCircle className="h-3.5 w-3.5" />
-              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                Add Dealer
-              </span>
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => fetchDealers()}
+                disabled={isRefreshing}
+              >
+                {isRefreshing ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-3.5 w-3.5" />
+                )}
+              </Button>
+              <Button
+                size="sm"
+                className="ml-auto gap-1"
+                onClick={() => setIsAddDealerOpen(true)}
+              >
+                <PlusCircle className="h-3.5 w-3.5" />
+                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                  Add Dealer
+                </span>
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
@@ -155,10 +280,10 @@ export function DealerManagement() {
             <TableHeader>
               <TableRow>
                 <TableHead>Company Name</TableHead>
-                <TableHead>Contact</TableHead>
-                <TableHead>Subscription</TableHead>
+                <TableHead>Plan</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>License Expiry</TableHead>
+                <TableHead>Subscription End</TableHead>
+                <TableHead>Created</TableHead>
                 <TableHead>
                   <span className="sr-only">Actions</span>
                 </TableHead>
@@ -167,69 +292,85 @@ export function DealerManagement() {
             <TableBody>
               {isLoading && (
                 <>
-                  <TableRow>
-                    <TableCell colSpan={6}><Skeleton className="h-8 w-full" /></TableCell>
-                  </TableRow>
-                  <TableRow>
-                     <TableCell colSpan={6}><Skeleton className="h-8 w-full" /></TableCell>
-                  </TableRow>
+                  {[1, 2, 3].map((i) => (
+                    <TableRow key={i}>
+                      <TableCell colSpan={6}><Skeleton className="h-8 w-full" /></TableCell>
+                    </TableRow>
+                  ))}
                 </>
               )}
-              {!isLoading && dealers && dealers.map((dealer) => (
-                <TableRow key={dealer.id}>
-                  <TableCell className="font-medium">
-                    {dealer.companyName}
-                  </TableCell>
-                  <TableCell>
-                    <div className="font-medium">{dealer.contactName}</div>
-                    <div className="text-sm text-muted-foreground">
-                      {dealer.contactEmail}
-                    </div>
-                  </TableCell>
-                  <TableCell className="capitalize">{dealer.subscriptionPlanId}</TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={dealer.status === 'Active' ? 'default' : 'destructive'}
-                      className={dealer.status === 'Active' ? 'bg-green-600' : ''}
-                    >
-                      {dealer.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell>
-                    {new Date(dealer.expiryDate).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button aria-haspopup="true" size="icon" variant="ghost">
-                          <MoreHorizontal className="h-4 w-4" />
-                          <span className="sr-only">Toggle menu</span>
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                        <DropdownMenuItem onClick={() => openEditDialog(dealer)}>Edit Details</DropdownMenuItem>
-                        <DropdownMenuItem>Manage License</DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleSuspendDealer(dealer)}>
-                           {dealer.status === 'Active' ? 'Suspend Dealer' : 'Activate Dealer'}
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleResetPassword(dealer.contactEmail)}>
-                          Reset Password
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem
-                          className="text-destructive"
-                          onClick={() => openDeleteDialog(dealer)}
-                        >
-                          Delete Dealer
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </TableCell>
-                </TableRow>
-              ))}
-               {!isLoading && (!dealers || dealers.length === 0) && (
+              {!isLoading && dealers && dealers.map((dealer) => {
+                const daysRemaining = getDaysRemaining(dealer.subscription_end);
+                const isExpiringSoon = daysRemaining !== null && daysRemaining < 30 && daysRemaining > 0;
+
+                return (
+                  <TableRow key={dealer.tenant_id}>
+                    <TableCell className="font-medium">
+                      {dealer.name}
+                    </TableCell>
+                    <TableCell className="capitalize">
+                      <Badge variant="outline">{dealer.plan || 'None'}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={dealer.is_active && dealer.status === 'active' ? 'default' : 'destructive'}
+                        className={dealer.is_active && dealer.status === 'active' ? 'bg-green-600' : ''}
+                      >
+                        {dealer.is_active ? dealer.status : 'Inactive'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {dealer.subscription_end ? (
+                        <div className="flex flex-col">
+                          <span>{new Date(dealer.subscription_end).toLocaleDateString()}</span>
+                          {isExpiringSoon && (
+                            <span className="text-xs text-orange-600">
+                              {daysRemaining} days left
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground">No expiry</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {new Date(dealer.created_at).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button aria-haspopup="true" size="icon" variant="ghost">
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
+                          <DropdownMenuItem onClick={() => openEditDialog(dealer)}>
+                            <Pencil className="mr-2 h-4 w-4" />
+                            Edit Details
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openFeatureModal(dealer)}>
+                            <Settings className="mr-2 h-4 w-4" />
+                            Manage Features
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleToggleStatus(dealer)}>
+                            {dealer.is_active ? 'Suspend Dealer' : 'Activate Dealer'}
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem
+                            className="text-destructive"
+                            onClick={() => openDeleteDialog(dealer)}
+                          >
+                            Delete Dealer
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+              {!isLoading && (!dealers || dealers.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={6} className="text-center">
                     No dealers found. Add one to get started!
@@ -240,7 +381,7 @@ export function DealerManagement() {
           </Table>
         </CardContent>
       </Card>
-      
+
       <Dialog open={isAddDealerOpen} onOpenChange={setIsAddDealerOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
@@ -258,20 +399,26 @@ export function DealerManagement() {
           <DialogHeader>
             <DialogTitle>Edit Dealer Details</DialogTitle>
             <DialogDescription>
-              Update the details for {selectedDealer?.companyName}.
+              Update the details for {selectedDealer?.name}.
             </DialogDescription>
           </DialogHeader>
-          <EditDealerForm 
-            dealer={selectedDealer} 
+          <EditDealerForm
+            dealer={selectedDealer ? {
+              id: selectedDealer.tenant_id,
+              companyName: selectedDealer.name,
+              subscriptionPlanId: selectedDealer.plan,
+              contactName: '',
+              contactEmail: '',
+              status: selectedDealer.status,
+              expiryDate: selectedDealer.subscription_end || ''
+            } : null}
             onFinished={(values) => {
               handleEditDealer(values);
-              setIsEditDealerOpen(false);
-              setSelectedDealer(null);
-            }} 
+            }}
           />
         </DialogContent>
       </Dialog>
-      
+
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -293,6 +440,14 @@ export function DealerManagement() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      <FeatureManagementModal
+        isOpen={isFeatureModalOpen}
+        onClose={() => {
+          setIsFeatureModalOpen(false);
+          setSelectedDealer(null);
+        }}
+        dealer={selectedDealer}
+      />
     </>
   );
 }

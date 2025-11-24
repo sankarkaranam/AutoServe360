@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import {
   Table,
@@ -18,7 +18,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Image as ImageIcon } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
   DropdownMenu,
@@ -44,36 +44,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { PlaceHolderImages, type ImagePlaceholder } from '@/lib/placeholder-images';
 import { useToast } from '@/hooks/use-toast';
 import { Skeleton } from '../ui/skeleton';
-import { AddItemFirestoreForm, type NewItemDetails } from './add-item-firestore';
-import { EditItemFirestoreForm, type ItemDetails } from './edit-item-firestore';
+import { AddItemForm, type NewItemDetails } from './add-item-form';
+import { EditItemForm, type ItemDetails } from './edit-item-form';
 import { AdjustStockFirestoreForm } from './adjust-stock-firestore';
+import { listInventory, createInventoryItem, updateInventoryItem, deleteInventoryItem } from '@/components/pos/data';
 
-
-export type InventoryItem = {
-    id: string;
-    name: string;
-    sku: string;
-    stock: number;
-    price: number;
-    imageId: string;
-}
-
-const sampleInventory = [
-    { id: 'item-001', name: 'Engine Oil (1L)', sku: 'EO-1L-SYN', stock: 15, price: 1250, imageId: 'engine-oil' },
-    { id: 'item-002', name: 'Oil Filter', sku: 'OF-GEN-01', stock: 45, price: 350, imageId: 'oil-filter' },
-    { id: 'item-003', name: 'Air Filter', sku: 'AF-GEN-01', stock: 32, price: 450, imageId: 'air-filter' },
-    { id: 'item-004', name: 'Brake Pads (Set)', sku: 'BP-FR-01', stock: 8, price: 1800, imageId: 'brake-pads' },
-    { id: 'item-005', name: 'Chain Lube', sku: 'CL-500ML', stock: 25, price: 600, imageId: 'chain-lube' },
-    { id: 'item-006', name: 'Spark Plug', sku: 'SP-BOSCH-01', stock: 5, price: 150, imageId: 'spark-plug' },
-    { id: 'item-007', name: 'Motorcycle Chain', sku: 'MC-STD-120', stock: 12, price: 2200, imageId: 'motorcycle-chain' },
-    { id: 'item-008', name: 'Motorcycle Tire', sku: 'MT-100-90-17', stock: 9, price: 3500, imageId: 'motorcycle-tire' },
-    { id: 'item-009', name: 'Full-face Helmet', sku: 'HEL-FF-BLK-M', stock: 18, price: 4500, imageId: 'helmet' },
-    { id: 'item-010', name: 'Riding Gloves', sku: 'GLV-R-BLK-L', stock: 22, price: 1500, imageId: 'gloves' },
-];
-
+import { InventoryItem } from '@/components/pos/types';
 
 export function InventoryManagement() {
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
@@ -82,18 +60,30 @@ export function InventoryManagement() {
   const [isAdjustStockOpen, setIsAdjustStockOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const { toast } = useToast();
-  const [inventory, setInventory] = useState<InventoryItem[]>(sampleInventory);
-  const [isLoading, setIsLoading] = useState(false);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
 
-  
+  const fetchInventory = async () => {
+    try {
+      setIsLoading(true);
+      const data = await listInventory();
+      setInventory(data);
+    } catch (error) {
+      console.error("Failed to fetch inventory", error);
+      toast({ variant: "destructive", title: "Error", description: "Failed to load inventory items." });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchInventory();
+  }, []);
+
   const getStockBadge = (stock: number) => {
     if (stock > 20) return <Badge className="bg-green-600">In Stock</Badge>;
     if (stock > 0) return <Badge variant="secondary" className="bg-yellow-500">Low Stock</Badge>;
     return <Badge variant="destructive">Out of Stock</Badge>;
-  }
-  
-  const getImage = (imageId: string) => {
-    return PlaceHolderImages.find(img => img.id === imageId);
   }
 
   const openDialog = (dialog: 'add' | 'edit' | 'adjust' | 'delete', item?: InventoryItem) => {
@@ -106,33 +96,49 @@ export function InventoryManagement() {
 
   const handleDeleteItem = async () => {
     if (!selectedItem) return;
-    setInventory(inventory.filter(i => i.id !== selectedItem.id));
-    toast({ title: 'Item Deleted', description: `${selectedItem.name} has been removed from inventory.`});
-    setIsDeleteDialogOpen(false);
+    try {
+      await deleteInventoryItem(selectedItem.id);
+      setInventory(inventory.filter(i => i.id !== selectedItem.id));
+      toast({ title: 'Item Deleted', description: `${selectedItem.name} has been removed from inventory.` });
+      setIsDeleteDialogOpen(false);
+    } catch (error) {
+      toast({ variant: "destructive", title: "Error", description: "Failed to delete item." });
+    }
   };
-  
-  const handleAddItem = (newItem: NewItemDetails) => {
-    const newInvItem = {
-      id: `item-${Date.now()}`,
-      ...newItem,
-    };
-    setInventory(prev => [newInvItem, ...prev]);
-    setIsAddDialogOpen(false);
-    toast({ title: 'Item Added', description: `${newItem.name} has been added to the inventory.`});
+
+  const handleAddItem = async (newItem: NewItemDetails) => {
+    try {
+      const created = await createInventoryItem(newItem);
+      setInventory(prev => [created, ...prev]);
+      setIsAddDialogOpen(false);
+      toast({ title: 'Item Added', description: `${newItem.name} has been added to the inventory.` });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Error", description: "Failed to add item." });
+    }
   }
-  
-  const handleEditItem = (editedItem: ItemDetails) => {
+
+  const handleEditItem = async (editedItem: ItemDetails) => {
     if (!selectedItem) return;
-    setInventory(inventory.map(i => i.id === selectedItem.id ? { ...i, ...editedItem } : i));
-    setIsEditDialogOpen(false);
-    toast({ title: 'Item Updated', description: `${editedItem.name} has been updated.`});
+    try {
+      const updated = await updateInventoryItem(selectedItem.id, editedItem);
+      setInventory(inventory.map(i => i.id === selectedItem.id ? updated : i));
+      setIsEditDialogOpen(false);
+      toast({ title: 'Item Updated', description: `${editedItem.name} has been updated.` });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Error", description: "Failed to update item." });
+    }
   }
-  
-  const handleAdjustStock = (newStock: number) => {
-     if (!selectedItem) return;
-     setInventory(inventory.map(i => i.id === selectedItem.id ? { ...i, stock: newStock } : i));
-     setIsAdjustStockOpen(false);
-     toast({ title: 'Stock Adjusted', description: `Stock for ${selectedItem.name} is now ${newStock}.`});
+
+  const handleAdjustStock = async (newStock: number) => {
+    if (!selectedItem) return;
+    try {
+      const updated = await updateInventoryItem(selectedItem.id, { ...selectedItem, stock: newStock });
+      setInventory(inventory.map(i => i.id === selectedItem.id ? updated : i));
+      setIsAdjustStockOpen(false);
+      toast({ title: 'Stock Adjusted', description: `Stock for ${selectedItem.name} is now ${newStock}.` });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Error", description: "Failed to adjust stock." });
+    }
   }
 
   return (
@@ -172,54 +178,54 @@ export function InventoryManagement() {
             <TableBody>
               {isLoading && Array.from({ length: 5 }).map((_, i) => (
                 <TableRow key={i}>
-                    <TableCell colSpan={7}><Skeleton className="h-12 w-full" /></TableCell>
+                  <TableCell colSpan={7}><Skeleton className="h-12 w-full" /></TableCell>
                 </TableRow>
               ))}
               {!isLoading && inventory?.map((item) => {
-                const image = getImage(item.imageId);
                 return (
                   <TableRow key={item.id}>
-                      <TableCell>
-                          <div className="w-12 h-12 rounded-md overflow-hidden bg-muted">
-                          {image && (
-                              <Image 
-                                  src={image.imageUrl}
-                                  alt={item.name}
-                                  width={48}
-                                  height={48}
-                                  className="object-cover"
-                                  data-ai-hint={image.imageHint}
-                              />
-                          )}
-                          </div>
-                      </TableCell>
-                      <TableCell className="font-medium">{item.name}</TableCell>
-                      <TableCell>{item.sku}</TableCell>
-                      <TableCell>{getStockBadge(item.stock)}</TableCell>
-                      <TableCell className="text-right">{item.stock}</TableCell>
-                      <TableCell className="text-right">{item.price.toFixed(2)}</TableCell>
-                      <TableCell className="text-right">
+                    <TableCell>
+                      <div className="w-12 h-12 rounded-md overflow-hidden bg-muted flex items-center justify-center">
+                        {item.image_url ? (
+                          <Image
+                            src={item.image_url}
+                            alt={item.name}
+                            width={48}
+                            height={48}
+                            className="object-cover h-full w-full"
+                          />
+                        ) : (
+                          <ImageIcon className="h-6 w-6 text-muted-foreground" />
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="font-medium">{item.name}</TableCell>
+                    <TableCell>{item.sku}</TableCell>
+                    <TableCell>{getStockBadge(item.stock)}</TableCell>
+                    <TableCell className="text-right">{item.stock}</TableCell>
+                    <TableCell className="text-right">{item.price.toFixed(2)}</TableCell>
+                    <TableCell className="text-right">
                       <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
+                        <DropdownMenuTrigger asChild>
                           <Button aria-haspopup="true" size="icon" variant="ghost">
-                              <MoreHorizontal className="h-4 w-4" />
-                              <span className="sr-only">Toggle menu</span>
+                            <MoreHorizontal className="h-4 w-4" />
+                            <span className="sr-only">Toggle menu</span>
                           </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
                           <DropdownMenuItem onClick={() => openDialog('edit', item)}>Edit Item</DropdownMenuItem>
                           <DropdownMenuItem onClick={() => openDialog('adjust', item)}>Adjust Stock</DropdownMenuItem>
                           <DropdownMenuItem className="text-destructive" onClick={() => openDialog('delete', item)}>
-                              Delete Item
+                            Delete Item
                           </DropdownMenuItem>
-                          </DropdownMenuContent>
+                        </DropdownMenuContent>
                       </DropdownMenu>
-                      </TableCell>
+                    </TableCell>
                   </TableRow>
                 )
               })}
-               {!isLoading && (!inventory || inventory.length === 0) && (
+              {!isLoading && (!inventory || inventory.length === 0) && (
                 <TableRow>
                   <TableCell colSpan={7} className="text-center py-10">
                     No inventory items found. Add one to get started.
@@ -230,47 +236,47 @@ export function InventoryManagement() {
           </Table>
         </CardContent>
       </Card>
-      
+
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>Add New Item</DialogTitle>
             <DialogDescription>Enter the details for the new inventory item.</DialogDescription>
           </DialogHeader>
-          <AddItemFirestoreForm onFinished={handleAddItem} />
+          <AddItemForm onFinished={handleAddItem} />
         </DialogContent>
       </Dialog>
 
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-                <DialogTitle>Edit Item</DialogTitle>
-                <DialogDescription>Update the details for {selectedItem?.name}.</DialogDescription>
-            </DialogHeader>
-            {selectedItem && <EditItemFirestoreForm item={selectedItem} onFinished={handleEditItem} />}
+          <DialogHeader>
+            <DialogTitle>Edit Item</DialogTitle>
+            <DialogDescription>Update the details for {selectedItem?.name}.</DialogDescription>
+          </DialogHeader>
+          {selectedItem && <EditItemForm item={selectedItem} onFinished={handleEditItem} />}
         </DialogContent>
       </Dialog>
-      
+
       <Dialog open={isAdjustStockOpen} onOpenChange={setIsAdjustStockOpen}>
         <DialogContent className="sm:max-w-xs">
-            <DialogHeader>
-                <DialogTitle>Adjust Stock</DialogTitle>
-                <DialogDescription>Change the stock quantity for {selectedItem?.name}.</DialogDescription>
-            </DialogHeader>
-            {selectedItem && <AdjustStockFirestoreForm item={selectedItem} onFinished={() => handleAdjustStock(selectedItem.stock)} />}
+          <DialogHeader>
+            <DialogTitle>Adjust Stock</DialogTitle>
+            <DialogDescription>Change the stock quantity for {selectedItem?.name}.</DialogDescription>
+          </DialogHeader>
+          {selectedItem && <AdjustStockFirestoreForm item={selectedItem} onFinished={() => handleAdjustStock(selectedItem.stock)} />}
         </DialogContent>
       </Dialog>
 
       <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <AlertDialogContent>
-            <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>This will permanently delete the item from your inventory. This action cannot be undone.</AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleDeleteItem} className="bg-destructive hover:bg-destructive/90">Continue</AlertDialogAction>
-            </AlertDialogFooter>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>This will permanently delete the item from your inventory. This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteItem} className="bg-destructive hover:bg-destructive/90">Continue</AlertDialogAction>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </>

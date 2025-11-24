@@ -28,20 +28,20 @@ import {
 const formSchema = z.object({
   name: z.string().min(3, { message: 'Campaign name must be at least 3 characters.' }),
   message: z.string().min(10, { message: 'Message must be at least 10 characters.' }),
-  target: z.string({ required_error: 'Please select a target audience.' }),
-  channel: z.string({ required_error: 'Please select a delivery channel.' }),
+  target: z.string().min(1, { message: 'Please select a target audience.' }),
+  channel: z.string().min(1, { message: 'Please select a delivery channel.' }),
   schedule: z.string().optional(),
 });
 
 type FormValues = z.infer<typeof formSchema>;
 
 export type Campaign = {
-    id: string;
-    name: string;
-    target: string;
-    channel: string;
-    status: 'Draft' | 'Sent' | 'Scheduled';
-    sentOn: string | null;
+  id: string;
+  name: string;
+  target: string;
+  channel: string;
+  status: 'Draft' | 'Sent' | 'Scheduled';
+  sentOn: string | null;
 }
 
 type CreateCampaignFormProps = {
@@ -127,7 +127,7 @@ export function CreateCampaignForm({ onFinished }: CreateCampaignFormProps) {
                     <SelectItem value="All Customers">All Customers</SelectItem>
                     <SelectItem value="New Leads">New Leads</SelectItem>
                     <SelectItem value="High-Value Customers">High-Value Customers</SelectItem>
-                     <SelectItem value="Recent Service">Recent Service Visitors</SelectItem>
+                    <SelectItem value="Recent Service">Recent Service Visitors</SelectItem>
                   </SelectContent>
                 </Select>
                 <FormMessage />
@@ -158,18 +158,18 @@ export function CreateCampaignForm({ onFinished }: CreateCampaignFormProps) {
           />
         </div>
         <FormField
-            control={form.control}
-            name="schedule"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Schedule (Optional)</FormLabel>
-                <FormControl>
-                    <Input type="datetime-local" {...field} />
-                </FormControl>
-                <p className="text-xs text-muted-foreground pt-1">Leave blank to save as draft.</p>
-                <FormMessage />
-                </FormItem>
-            )}
+          control={form.control}
+          name="schedule"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Schedule (Optional)</FormLabel>
+              <FormControl>
+                <Input type="datetime-local" {...field} />
+              </FormControl>
+              <p className="text-xs text-muted-foreground pt-1">Leave blank to save as draft.</p>
+              <FormMessage />
+            </FormItem>
+          )}
         />
         <div className="flex justify-end pt-4 space-x-2">
           <Button type="submit" disabled={isLoading}>

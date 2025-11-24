@@ -1,5 +1,5 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -16,7 +16,7 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Loader2, RefreshCw } from 'lucide-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -24,31 +24,44 @@ import {
   DropdownMenuLabel,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { Skeleton } from '../ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import { api } from '@/lib/api';
 
-const samplePlans = [
-  {
-    id: 'basic',
-    name: 'Basic',
-    price: 999,
-    features: 'CRM & Leads, Basic Inventory',
-  },
-  {
-    id: 'standard',
-    name: 'Standard',
-    price: 1999,
-    features: 'Basic Plan + POS, Service Reminders',
-  },
-  {
-    id: 'premium',
-    name: 'Premium',
-    price: 2999,
-    features: 'Standard Plan + Advanced Reports, AI Tools',
-  },
-];
+interface SubscriptionPlan {
+  id: string;
+  name: string;
+  price: number;
+  features: string;
+  is_active: boolean;
+}
 
 export function SubscriptionManagement() {
-  // In the future, this would come from a useCollection hook
-  const [plans] = useState(samplePlans);
+  const [plans, setPlans] = useState<SubscriptionPlan[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { toast } = useToast();
+
+  const fetchPlans = async () => {
+    try {
+      setIsRefreshing(true);
+      const data = await api<SubscriptionPlan[]>('/api/v1/saas/plans');
+      setPlans(data);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to load subscription plans. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPlans();
+  }, []);
 
   return (
     <Card>
@@ -60,12 +73,26 @@ export function SubscriptionManagement() {
               Create, view, and manage subscription plans for dealers.
             </CardDescription>
           </div>
-          <Button size="sm" className="ml-auto gap-1">
-            <PlusCircle className="h-3.5 w-3.5" />
-            <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-              Add Plan
-            </span>
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => fetchPlans()}
+              disabled={isRefreshing}
+            >
+              {isRefreshing ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="h-3.5 w-3.5" />
+              )}
+            </Button>
+            <Button size="sm" className="ml-auto gap-1">
+              <PlusCircle className="h-3.5 w-3.5" />
+              <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                Add Plan
+              </span>
+            </Button>
+          </div>
         </div>
       </CardHeader>
       <CardContent>
@@ -81,11 +108,26 @@ export function SubscriptionManagement() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {plans.map((plan) => (
+            {isLoading && (
+              <>
+                {[1, 2, 3].map((i) => (
+                  <TableRow key={i}>
+                    <TableCell colSpan={4}><Skeleton className="h-8 w-full" /></TableCell>
+                  </TableRow>
+                ))}
+              </>
+            )}
+            {!isLoading && plans.map((plan) => (
               <TableRow key={plan.id}>
                 <TableCell className="font-medium">{plan.name}</TableCell>
-                <TableCell>₹{plan.price.toLocaleString()}</TableCell>
-                <TableCell>{plan.features}</TableCell>
+                <TableCell>
+                  {plan.price > 0 ? `₹${plan.price.toLocaleString()}` : 'Custom'}
+                </TableCell>
+                <TableCell className="max-w-md">
+                  <div className="text-sm text-muted-foreground line-clamp-2">
+                    {plan.features}
+                  </div>
+                </TableCell>
                 <TableCell>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
@@ -105,6 +147,13 @@ export function SubscriptionManagement() {
                 </TableCell>
               </TableRow>
             ))}
+            {!isLoading && plans.length === 0 && (
+              <TableRow>
+                <TableCell colSpan={4} className="text-center">
+                  No subscription plans found.
+                </TableCell>
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </CardContent>

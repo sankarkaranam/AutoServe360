@@ -6,7 +6,7 @@ export type CreateInvoiceInput = {
   email?: string;
   vehicle_no?: string;
   items: PosItemInput[];
-  status?: 'DUE'|'PAID'|'PARTIAL';
+  status?: 'DUE' | 'PAID' | 'PARTIAL';
 };
 
 export type InvoiceSummary = {
@@ -14,5 +14,14 @@ export type InvoiceSummary = {
   customer: string;
   date: string;
   amount: number;
-  status: 'DUE'|'PAID'|'PARTIAL';
+  status: 'DUE' | 'PAID' | 'PARTIAL';
+};
+
+export type InventoryItem = {
+  id: string;
+  name: string;
+  sku: string | null;
+  stock: number;
+  price: number;
+  image_url?: string;
 };

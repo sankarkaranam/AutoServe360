@@ -1,4 +1,4 @@
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import {
   Card,
   CardContent,
@@ -6,41 +6,60 @@ import {
   CardHeader,
   CardTitle,
 } from '@/components/ui/card';
+import { Skeleton } from '../ui/skeleton';
+import { formatDistanceToNow } from 'date-fns';
 
-const activities = [
-  {
-    user: 'Technician',
-    avatar: 'TN',
-    action: 'closed job card #1024.',
-    time: '5 minutes ago',
-  },
-  {
-    user: 'Cashier',
-    avatar: 'CS',
-    action: 'processed payment of ₹1,250.',
-    time: '12 minutes ago',
-  },
-  {
-    user: 'Sales Rep',
-    avatar: 'SR',
-    action: 'added a new lead: Ankit Sharma.',
-    time: '30 minutes ago',
-  },
-  {
-    user: 'Admin',
-    avatar: 'AD',
-    action: 'updated inventory for Part #55-Tires.',
-    time: '1 hour ago',
-  },
-   {
-    user: 'System',
-    avatar: 'SYS',
-    action: 'sent 15 service reminders.',
-    time: '2 hours ago',
-  },
-];
+interface ActivityFeedProps {
+  activities: Array<{
+    type: string;
+    description: string;
+    amount: number;
+    time: string;
+  }>;
+  loading?: boolean;
+}
 
-export function ActivityFeed() {
+export function ActivityFeed({ activities, loading = false }: ActivityFeedProps) {
+  if (loading) {
+    return (
+      <Card className="shadow-md">
+        <CardHeader>
+          <CardTitle className="font-headline">Recent Activity</CardTitle>
+          <CardDescription>A log of the latest actions in your dealership.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {[...Array(5)].map((_, i) => (
+              <div key={i} className="flex items-start gap-4">
+                <Skeleton className="h-9 w-9 rounded-full" />
+                <div className="space-y-2 flex-1">
+                  <Skeleton className="h-4 w-3/4" />
+                  <Skeleton className="h-3 w-1/4" />
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (activities.length === 0) {
+    return (
+      <Card className="shadow-md">
+        <CardHeader>
+          <CardTitle className="font-headline">Recent Activity</CardTitle>
+          <CardDescription>A log of the latest actions in your dealership.</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground text-center py-8">
+            No recent activity. Start creating invoices to see activity here.
+          </p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   return (
     <Card className="shadow-md">
       <CardHeader>
@@ -49,19 +68,27 @@ export function ActivityFeed() {
       </CardHeader>
       <CardContent>
         <div className="space-y-4">
-          {activities.map((activity, index) => (
-            <div key={index} className="flex items-start gap-4">
-              <Avatar className="h-9 w-9">
-                <AvatarFallback>{activity.avatar}</AvatarFallback>
-              </Avatar>
-              <div className="grid gap-1">
-                <p className="text-sm font-medium leading-none">
-                  <span className='font-semibold'>{activity.user}</span> {activity.action}
-                </p>
-                <p className="text-sm text-muted-foreground">{activity.time}</p>
+          {activities.map((activity, index) => {
+            const avatar = activity.type === 'payment' ? 'CS' : 'IN';
+            const timeAgo = formatDistanceToNow(new Date(activity.time), { addSuffix: true });
+
+            return (
+              <div key={index} className="flex items-start gap-4">
+                <Avatar className="h-9 w-9">
+                  <AvatarFallback>{avatar}</AvatarFallback>
+                </Avatar>
+                <div className="grid gap-1 flex-1">
+                  <p className="text-sm font-medium leading-none">
+                    {activity.description}
+                  </p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm text-muted-foreground">{timeAgo}</p>
+                    <p className="text-sm font-medium">₹{activity.amount.toLocaleString('en-IN')}</p>
+                  </div>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </CardContent>
     </Card>

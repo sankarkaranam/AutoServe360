@@ -24,9 +24,9 @@ import { Label } from '../ui/label';
 const formSchema = z.object({
   name: z.string().min(3, { message: 'Item name must be at least 3 characters.' }),
   sku: z.string().min(3, { message: 'SKU must be at least 3 characters.' }),
-  price: z.coerce.number().min(0, { message: 'Price cannot be negative.' }),
-  stock: z.coerce.number().min(0, { message: 'Stock cannot be negative.'}),
-  imageId: z.string({ required_error: 'Please select an image.' }),
+  price: z.number().min(0, { message: 'Price cannot be negative.' }),
+  stock: z.number().min(0, { message: 'Stock cannot be negative.' }),
+  imageId: z.string().min(1, { message: 'Please select an image.' }),
 });
 
 export type NewItemDetails = z.infer<typeof formSchema>;
@@ -38,7 +38,7 @@ type AddItemFormProps = {
 export function AddItemFirestoreForm({ onFinished }: AddItemFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [localImages, setLocalImages] = useState<ImagePlaceholder[]>([]);
-  
+
   const form = useForm<NewItemDetails>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -48,7 +48,7 @@ export function AddItemFirestoreForm({ onFinished }: AddItemFormProps) {
       stock: 0,
     },
   });
-  
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -70,8 +70,8 @@ export function AddItemFirestoreForm({ onFinished }: AddItemFormProps) {
   function onSubmit(values: NewItemDetails) {
     setIsLoading(true);
     setTimeout(() => {
-        onFinished(values);
-        setIsLoading(false);
+      onFinished(values);
+      setIsLoading(false);
     }, 1000);
   }
 
@@ -94,46 +94,55 @@ export function AddItemFirestoreForm({ onFinished }: AddItemFormProps) {
           )}
         />
         <div className="grid grid-cols-2 gap-4">
-            <FormField
+          <FormField
             control={form.control}
             name="sku"
             render={({ field }) => (
-                <FormItem>
+              <FormItem>
                 <FormLabel>SKU</FormLabel>
                 <FormControl>
-                    <Input {...field} />
+                  <Input {...field} />
                 </FormControl>
                 <FormMessage />
-                </FormItem>
+              </FormItem>
             )}
-            />
-            <FormField
+          />
+          <FormField
             control={form.control}
             name="price"
             render={({ field }) => (
-                <FormItem>
+              <FormItem>
                 <FormLabel>Unit Price (₹)</FormLabel>
                 <FormControl>
-                    <Input type="number" step="0.01" {...field} />
+                  <Input
+                    type="number"
+                    step="0.01"
+                    {...field}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  />
                 </FormControl>
                 <FormMessage />
-                </FormItem>
+              </FormItem>
             )}
-            />
+          />
         </div>
         <FormField
-            control={form.control}
-            name="stock"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Initial Stock Quantity</FormLabel>
-                <FormControl>
-                    <Input type="number" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
+          control={form.control}
+          name="stock"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Initial Stock Quantity</FormLabel>
+              <FormControl>
+                <Input
+                  type="number"
+                  {...field}
+                  onChange={(e) => field.onChange(Number(e.target.value))}
+                />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
         <FormField
           control={form.control}
           name="imageId"
@@ -151,28 +160,28 @@ export function AddItemFirestoreForm({ onFinished }: AddItemFormProps) {
               </div>
               <FormControl>
                 <ScrollArea className="h-48 w-full rounded-md border">
-                    <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 p-2">
-                        {allImages.map((image) => (
-                        <div
-                            key={image.id}
-                            onClick={() => field.onChange(image.id)}
-                            className={cn(
-                            'cursor-pointer rounded-md border-2 p-1',
-                            field.value === image.id
-                                ? 'border-primary ring-2 ring-primary'
-                                : 'border-transparent'
-                            )}
-                        >
-                            <Image
-                            src={image.imageUrl}
-                            alt={image.description}
-                            width={100}
-                            height={100}
-                            className="aspect-square w-full rounded-sm object-cover"
-                            />
-                        </div>
-                        ))}
-                    </div>
+                  <div className="grid grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2 p-2">
+                    {allImages.map((image) => (
+                      <div
+                        key={image.id}
+                        onClick={() => field.onChange(image.id)}
+                        className={cn(
+                          'cursor-pointer rounded-md border-2 p-1',
+                          field.value === image.id
+                            ? 'border-primary ring-2 ring-primary'
+                            : 'border-transparent'
+                        )}
+                      >
+                        <Image
+                          src={image.imageUrl}
+                          alt={image.description}
+                          width={100}
+                          height={100}
+                          className="aspect-square w-full rounded-sm object-cover"
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </ScrollArea>
               </FormControl>
               <FormMessage />

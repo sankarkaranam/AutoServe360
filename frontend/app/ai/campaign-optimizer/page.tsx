@@ -22,7 +22,7 @@ import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form';
 
 const formSchema = z.object({
-  campaignType: z.string({ required_error: 'Please select a campaign type.' }),
+  campaignType: z.string().min(1, { message: 'Please select a campaign type.' }),
   targetAudience: z.string().min(10, { message: 'Please describe the target audience.' }),
   historicalData: z.string().min(10, { message: 'Please provide some historical context.' }),
 });
@@ -31,7 +31,7 @@ function CampaignOptimizerCorePage() {
   const [result, setResult] = useState<OptimizeCampaignSendTimeOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -78,76 +78,76 @@ function CampaignOptimizerCorePage() {
               Let AI determine the best time to send your campaign for maximum engagement.
             </p>
           </div>
-          
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handleOptimizeCampaign)} className="space-y-6">
-                <Card>
-                    <CardHeader>
-                    <CardTitle>1. Describe Your Campaign</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                         <FormField
-                            control={form.control}
-                            name="campaignType"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Campaign Type</FormLabel>
-                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                        <FormControl>
-                                            <SelectTrigger>
-                                            <SelectValue placeholder="Select a campaign type" />
-                                            </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                            <SelectItem value="service-reminders">Service Reminders</SelectItem>
-                                            <SelectItem value="festival-greetings">Festival Greetings</SelectItem>
-                                            <SelectItem value="promotional-offers">Promotional Offers</SelectItem>
-                                            <SelectItem value="new-product-launch">New Product Launch</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                        <FormField
-                            control={form.control}
-                            name="targetAudience"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Target Audience</FormLabel>
-                                    <FormControl>
-                                        <Textarea placeholder="e.g., Customers who bought a bike in the last year." {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                         <FormField
-                            control={form.control}
-                            name="historicalData"
-                            render={({ field }) => (
-                                <FormItem>
-                                    <FormLabel>Historical Context & Notes</FormLabel>
-                                    <FormControl>
-                                        <Textarea placeholder="e.g., Past campaigns performed well on weekends. Our target audience is mostly office workers." {...field} />
-                                    </FormControl>
-                                    <FormMessage />
-                                </FormItem>
-                            )}
-                        />
-                    </CardContent>
-                </Card>
-
-                <div className="flex justify-center">
-                    <Button type="submit" disabled={isLoading}>
-                    {isLoading ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                        <Bot className="mr-2 h-4 w-4" />
+              <Card>
+                <CardHeader>
+                  <CardTitle>1. Describe Your Campaign</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <FormField
+                    control={form.control}
+                    name="campaignType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Campaign Type</FormLabel>
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select a campaign type" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="service-reminders">Service Reminders</SelectItem>
+                            <SelectItem value="festival-greetings">Festival Greetings</SelectItem>
+                            <SelectItem value="promotional-offers">Promotional Offers</SelectItem>
+                            <SelectItem value="new-product-launch">New Product Launch</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <FormMessage />
+                      </FormItem>
                     )}
-                    Find Optimal Send Time
-                    </Button>
-                </div>
+                  />
+                  <FormField
+                    control={form.control}
+                    name="targetAudience"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Target Audience</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="e.g., Customers who bought a bike in the last year." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="historicalData"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Historical Context & Notes</FormLabel>
+                        <FormControl>
+                          <Textarea placeholder="e.g., Past campaigns performed well on weekends. Our target audience is mostly office workers." {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </CardContent>
+              </Card>
+
+              <div className="flex justify-center">
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Bot className="mr-2 h-4 w-4" />
+                  )}
+                  Find Optimal Send Time
+                </Button>
+              </div>
             </form>
           </Form>
 
@@ -179,7 +179,7 @@ function CampaignOptimizerCorePage() {
                 </div>
                 <Separator />
                 <div>
-                  <h3 className="font-semibold mb-2 flex items-center gap-2"><Lightbulb className="h-5 w-5"/>Rationale</h3>
+                  <h3 className="font-semibold mb-2 flex items-center gap-2"><Lightbulb className="h-5 w-5" />Rationale</h3>
                   <p className="text-sm text-muted-foreground p-4 border rounded-md bg-background">
                     {result.rationale}
                   </p>
@@ -194,14 +194,14 @@ function CampaignOptimizerCorePage() {
 }
 
 export default function CampaignOptimizerPage() {
-    return (
-        <SidebarProvider>
-            <div className="flex min-h-screen w-full">
-                <AppSidebar />
-                <SidebarInset>
-                    <CampaignOptimizerCorePage />
-                </SidebarInset>
-            </div>
-        </SidebarProvider>
-    );
+  return (
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full">
+        <AppSidebar />
+        <SidebarInset>
+          <CampaignOptimizerCorePage />
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
+  );
 }

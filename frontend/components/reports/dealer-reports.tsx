@@ -18,14 +18,14 @@ import { useTransactionStore } from '@/lib/transaction-store';
 import { generateMonthlyData, generateRecentActivity } from '@/lib/data-utils';
 
 const revenueSplitData = [
-    { name: 'Vehicle Service', value: 65, color: 'hsl(var(--chart-1))' },
-    { name: 'Parts & Accessories', value: 35, color: 'hsl(var(--chart-2))' },
+  { name: 'Vehicle Service', value: 65, color: 'hsl(var(--chart-1))' },
+  { name: 'Parts & Accessories', value: 35, color: 'hsl(var(--chart-2))' },
 ];
 
 
 export function DealerReports() {
   const { transactions } = useTransactionStore();
-  
+
   const [allMonthlyData, setAllMonthlyData] = useState<any[]>([]);
   const [allRecentActivity, setAllRecentActivity] = useState<any[]>([]);
   const isLoading = false; // Not loading from firestore anymore
@@ -35,10 +35,10 @@ export function DealerReports() {
     to: new Date(),
   });
 
-   useEffect(() => {
-    if(transactions){
-        setAllMonthlyData(generateMonthlyData(transactions));
-        setAllRecentActivity(generateRecentActivity(transactions));
+  useEffect(() => {
+    if (transactions) {
+      setAllMonthlyData(generateMonthlyData(transactions));
+      setAllRecentActivity(generateRecentActivity(transactions));
     }
   }, [transactions]);
 
@@ -53,25 +53,25 @@ export function DealerReports() {
     const activities = generateRecentActivity(transactions);
     return activities.filter(d => isWithinInterval(new Date(d.date), { start: date.from!, end: date.to || date.from! }));
   }, [date, transactions, isLoading]);
-  
+
   const totals = useMemo(() => {
     if (isLoading || !transactions) return { sales: 0, services: 0, newCustomers: 0 };
     return filteredData.reduce((acc, curr) => {
-        acc.sales += curr.sales;
-        acc.services += curr.services;
-        acc.newCustomers += curr.newCustomers;
-        return acc;
+      acc.sales += curr.sales;
+      acc.services += curr.services;
+      acc.newCustomers += curr.newCustomers;
+      return acc;
     }, { sales: 0, services: 0, newCustomers: 0 });
   }, [filteredData, isLoading, transactions]);
-  
+
   const avgSaleValue = useMemo(() => {
     if (isLoading || !transactions) return 0;
-    if(filteredActivity.length === 0) return 0;
+    if (filteredActivity.length === 0) return 0;
     const total = filteredActivity.reduce((sum, act) => sum + act.amount, 0);
     return total / filteredActivity.length;
   }, [filteredActivity, isLoading, transactions]);
 
-  const StatCardWrapper = ({...props}) => (
+  const StatCardWrapper = (props: React.ComponentProps<typeof StatCard>) => (
     isLoading ? <Skeleton className="h-28 w-full" /> : <StatCard {...props} />
   )
 
@@ -81,12 +81,12 @@ export function DealerReports() {
         <CardHeader>
           <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
             <div>
-                <CardTitle>Your Reports</CardTitle>
-                <CardDescription>
-                    Insights into your dealership's performance.
-                </CardDescription>
+              <CardTitle>Your Reports</CardTitle>
+              <CardDescription>
+                Insights into your dealership's performance.
+              </CardDescription>
             </div>
-             <Popover>
+            <Popover>
               <PopoverTrigger asChild>
                 <Button
                   id="date"
@@ -152,91 +152,91 @@ export function DealerReports() {
         />
       </div>
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-         <Card className="lg:col-span-3">
-            <CardHeader>
-                <CardTitle>Sales Over Time</CardTitle>
-                <CardDescription>Monthly sales performance for the selected period.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                    {isLoading ? <Skeleton className="h-full w-full" /> : (
-                        <BarChart data={filteredData}>
-                            <CartesianGrid strokeDasharray="3 3" />
-                            <XAxis dataKey="month" fontSize={12} tickLine={false} axisLine={false} />
-                            <YAxis tickFormatter={(value) => `₹${Number(value) / 1000}k`} fontSize={12} tickLine={false} axisLine={false}/>
-                            <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} formatter={(value: number) => `₹${value.toLocaleString('en-IN')}`} />
-                            <Legend />
-                            <Bar dataKey="sales" fill="hsl(var(--primary))" name="Sales" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                    )}
-                </ResponsiveContainer>
-            </CardContent>
-         </Card>
-         <Card className="lg:col-span-2">
-            <CardHeader>
-                <CardTitle>Revenue Split</CardTitle>
-                <CardDescription>Overall breakdown of revenue sources.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                {isLoading ? <Skeleton className="h-full w-full" /> : (
-                    <PieChart>
-                        <Pie data={revenueSplitData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
-                        {revenueSplitData.map((entry, index) => (
-                            <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                        </Pie>
-                        <Tooltip formatter={(value: number, name: string) => [`${value}%`, name]} />
-                        <Legend />
-                    </PieChart>
-                )}
-                </ResponsiveContainer>
-            </CardContent>
-         </Card>
+        <Card className="lg:col-span-3">
+          <CardHeader>
+            <CardTitle>Sales Over Time</CardTitle>
+            <CardDescription>Monthly sales performance for the selected period.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              {isLoading ? <Skeleton className="h-full w-full" /> : (
+                <BarChart data={filteredData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="month" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis tickFormatter={(value) => `₹${Number(value) / 1000}k`} fontSize={12} tickLine={false} axisLine={false} />
+                  <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} formatter={(value: number) => `₹${value.toLocaleString('en-IN')}`} />
+                  <Legend />
+                  <Bar dataKey="sales" fill="hsl(var(--primary))" name="Sales" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              )}
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+        <Card className="lg:col-span-2">
+          <CardHeader>
+            <CardTitle>Revenue Split</CardTitle>
+            <CardDescription>Overall breakdown of revenue sources.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ResponsiveContainer width="100%" height={300}>
+              {isLoading ? <Skeleton className="h-full w-full" /> : (
+                <PieChart>
+                  <Pie data={revenueSplitData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
+                    {revenueSplitData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip formatter={(value: number, name: string) => [`${value}%`, name]} />
+                  <Legend />
+                </PieChart>
+              )}
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
       </div>
 
-       <Card>
+      <Card>
         <CardHeader>
-            <CardTitle>Activity Log</CardTitle>
-            <CardDescription>A log of your sales and service jobs for the selected period.</CardDescription>
+          <CardTitle>Activity Log</CardTitle>
+          <CardDescription>A log of your sales and service jobs for the selected period.</CardDescription>
         </CardHeader>
         <CardContent>
-            <Table>
-                <TableHeader>
-                    <TableRow>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead>Date</TableHead>
-                        <TableHead className='text-right'>Amount</TableHead>
-                    </TableRow>
-                </TableHeader>
-                <TableBody>
-                    {isLoading && Array.from({length: 5}).map((_, i) => (
-                        <TableRow key={i}>
-                            <TableCell colSpan={4}><Skeleton className="h-8 w-full" /></TableCell>
-                        </TableRow>
-                    ))}
-                    {!isLoading && filteredActivity.length === 0 && (
-                        <TableRow>
-                            <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
-                                No activity found for the selected period.
-                            </TableCell>
-                        </TableRow>
-                    )}
-                    {!isLoading && filteredActivity.map(item => (
-                        <TableRow key={item.id}>
-                            <TableCell>
-                                <Badge variant={item.type === 'Sale' ? 'default' : 'secondary'} className={item.type === 'Sale' ? 'bg-blue-500' : 'bg-green-500'}>{item.type}</Badge>
-                            </TableCell>
-                            <TableCell className="font-medium">{item.description}</TableCell>
-                            <TableCell>{format(new Date(item.date), 'dd MMM yyyy')}</TableCell>
-                            <TableCell className='text-right'>₹{item.amount.toLocaleString('en-IN')}</TableCell>
-                        </TableRow>
-                    ))}
-                </TableBody>
-            </Table>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Type</TableHead>
+                <TableHead>Description</TableHead>
+                <TableHead>Date</TableHead>
+                <TableHead className='text-right'>Amount</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {isLoading && Array.from({ length: 5 }).map((_, i) => (
+                <TableRow key={i}>
+                  <TableCell colSpan={4}><Skeleton className="h-8 w-full" /></TableCell>
+                </TableRow>
+              ))}
+              {!isLoading && filteredActivity.length === 0 && (
+                <TableRow>
+                  <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                    No activity found for the selected period.
+                  </TableCell>
+                </TableRow>
+              )}
+              {!isLoading && filteredActivity.map(item => (
+                <TableRow key={item.id}>
+                  <TableCell>
+                    <Badge variant={item.type === 'Sale' ? 'default' : 'secondary'} className={item.type === 'Sale' ? 'bg-blue-500' : 'bg-green-500'}>{item.type}</Badge>
+                  </TableCell>
+                  <TableCell className="font-medium">{item.description}</TableCell>
+                  <TableCell>{format(new Date(item.date), 'dd MMM yyyy')}</TableCell>
+                  <TableCell className='text-right'>₹{item.amount.toLocaleString('en-IN')}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </CardContent>
-       </Card>
+      </Card>
     </div>
   );
 }

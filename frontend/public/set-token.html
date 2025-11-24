@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoServe360 - Set Auth Token</title>
+    <style>
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+        }
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #45a049;
+        }
+        button.secondary {
+            background: #2196F3;
+        }
+        button.secondary:hover {
+            background: #0b7dda;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+            display: none;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+        .token-display {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            word-break: break-all;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 AutoServe360 Authentication Setup</h1>
+        <p class="subtitle">Development Token Configuration</p>
+        
+        <div class="info">
+            <strong>📋 Current Status:</strong><br>
+            Token: <span id="tokenStatus">Not set</span><br>
+            Tenant ID: <span id="tenantStatus">Not set</span>
+        </div>
+        
+        <div class="token-display">
+            <strong>Token:</strong><br>
+            eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjNlNDU2Ny1lODliLTEyZDMtYTQ1Ni00MjY2MTQxNzQwMDAiLCJ0ZW5hbnRfaWQiOiI3MzdlZmRkNS1kYjJmLTQ4MWItOGZjMS01MWQ3NGRlNWNhZTEiLCJyb2xlIjoiYWRtaW4iLCJlbWFpbCI6ImFkbWluQHRlc3QuY29tIiwiZXhwIjoxNzY0MzMzODUwLCJpYXQiOjE3NjM3MjkwNTB9.sTndXuANc_R7-C0k_zYjaSAOISZpQShL9v32JLtPnfk
+        </div>
+        
+        <button onclick="setToken()">✅ Set Authentication Token</button>
+        <button class="secondary" onclick="checkToken()">🔍 Check Current Token</button>
+        <button class="secondary" onclick="testAPI()">🧪 Test API Call</button>
+        
+        <div id="success" class="success"></div>
+        
+        <div class="info" style="margin-top: 30px;">
+            <strong>ℹ️ Instructions:</strong>
+            <ol>
+                <li>Click "Set Authentication Token" to store the dev token</li>
+                <li>Navigate to <a href="http://localhost:3000/pos" target="_blank">http://localhost:3000/pos</a></li>
+                <li>The POS page should now load transaction history from the database</li>
+            </ol>
+        </div>
+    </div>
+
+    <script>
+        const TOKEN = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjNlNDU2Ny1lODliLTEyZDMtYTQ1Ni00MjY2MTQxNzQwMDAiLCJ0ZW5hbnRfaWQiOiI3MzdlZmRkNS1kYjJmLTQ4MWItOGZjMS01MWQ3NGRlNWNhZTEiLCJyb2xlIjoiYWRtaW4iLCJlbWFpbCI6ImFkbWluQHRlc3QuY29tIiwiZXhwIjoxNzY0MzMzODUwLCJpYXQiOjE3NjM3MjkwNTB9.sTndXuANc_R7-C0k_zYjaSAOISZpQShL9v32JLtPnfk';
+        const TENANT_ID = '737efdd5-db2f-481b-8fc1-51d74de5cae1';
+
+        function setToken() {
+            localStorage.setItem('as360_token', TOKEN);
+            localStorage.setItem('as360_tenant', TENANT_ID);
+            showSuccess('✅ Token and Tenant ID have been set successfully!<br>You can now use the POS page.');
+            updateStatus();
+        }
+
+        function checkToken() {
+            updateStatus();
+            const token = localStorage.getItem('as360_token');
+            if (token) {
+                showSuccess('✅ Token is set in localStorage');
+            } else {
+                showSuccess('❌ No token found. Click "Set Authentication Token" first.');
+            }
+        }
+
+        async function testAPI() {
+            const token = localStorage.getItem('as360_token');
+            if (!token) {
+                showSuccess('❌ No token found. Click "Set Authentication Token" first.');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/api/invoices?limit=5', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'X-Tenant-ID': TENANT_ID,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    showSuccess(`✅ API call successful!<br>Found ${data.length} invoice(s) in database.`);
+                } else {
+                    const error = await response.text();
+                    showSuccess(`❌ API call failed: ${response.status} - ${error}`);
+                }
+            } catch (error) {
+                showSuccess(`❌ API call error: ${error.message}`);
+            }
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('success');
+            successDiv.innerHTML = message;
+            successDiv.style.display = 'block';
+        }
+
+        function updateStatus() {
+            const token = localStorage.getItem('as360_token');
+            const tenant = localStorage.getItem('as360_tenant');
+            document.getElementById('tokenStatus').textContent = token ? '✅ Set' : '❌ Not set';
+            document.getElementById('tenantStatus').textContent = tenant ? `✅ ${tenant}` : '❌ Not set';
+        }
+
+        // Update status on load
+        updateStatus();
+    </script>
+</body>
+</html>

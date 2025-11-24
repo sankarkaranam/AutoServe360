@@ -26,7 +26,7 @@ import {
 const formSchema = z.object({
   firstName: z.string().min(2, { message: 'First name is required.' }),
   lastName: z.string().min(2, { message: 'Last name is required.' }),
-  role: z.string({ required_error: 'Please select a role.' }),
+  role: z.string().min(1, { message: 'Please select a role.' }),
 });
 
 type EditDealerUserFormProps = {
@@ -36,7 +36,7 @@ type EditDealerUserFormProps = {
 
 export function EditDealerUserForm({ userToEdit, onFinished }: EditDealerUserFormProps) {
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -45,7 +45,7 @@ export function EditDealerUserForm({ userToEdit, onFinished }: EditDealerUserFor
       role: userToEdit?.role || 'Staff',
     }
   });
-  
+
   useEffect(() => {
     if (userToEdit) {
       form.reset({
@@ -59,8 +59,8 @@ export function EditDealerUserForm({ userToEdit, onFinished }: EditDealerUserFor
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     setTimeout(() => {
-        onFinished(values);
-        setIsLoading(false);
+      onFinished(values);
+      setIsLoading(false);
     }, 1000)
   }
 
@@ -68,39 +68,39 @@ export function EditDealerUserForm({ userToEdit, onFinished }: EditDealerUserFor
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-            <FormField
+          <FormField
             control={form.control}
             name="firstName"
             render={({ field }) => (
-                <FormItem>
+              <FormItem>
                 <FormLabel>First Name</FormLabel>
                 <FormControl>
-                    <Input placeholder="e.g., Priya" {...field} />
+                  <Input placeholder="e.g., Priya" {...field} />
                 </FormControl>
                 <FormMessage />
-                </FormItem>
+              </FormItem>
             )}
-            />
-             <FormField
+          />
+          <FormField
             control={form.control}
             name="lastName"
             render={({ field }) => (
-                <FormItem>
+              <FormItem>
                 <FormLabel>Last Name</FormLabel>
                 <FormControl>
-                    <Input placeholder="e.g., Singh" {...field} />
+                  <Input placeholder="e.g., Singh" {...field} />
                 </FormControl>
                 <FormMessage />
-                </FormItem>
+              </FormItem>
             )}
-            />
+          />
         </div>
         <FormItem>
-            <FormLabel>Email</FormLabel>
-            <FormControl>
-                <Input value={userToEdit?.email || ''} readOnly disabled />
-            </FormControl>
-            <p className="text-xs text-muted-foreground pt-1">The login email cannot be changed.</p>
+          <FormLabel>Email</FormLabel>
+          <FormControl>
+            <Input value={userToEdit?.email || ''} readOnly disabled />
+          </FormControl>
+          <p className="text-xs text-muted-foreground pt-1">The login email cannot be changed.</p>
         </FormItem>
 
         <FormField

@@ -1,16 +1,16 @@
-"""init
+"""add_inventory_items_table
 
-Revision ID: ce2d89d56ec0
-Revises: 
-Create Date: 2025-11-05 17:01:46.789980+00:00
+Revision ID: c34e657f37b6
+Revises: 07cc3c421205
+Create Date: 2025-11-21 10:07:36.796638
 """
 
 from alembic import op
 import sqlalchemy as sa
 
 # revision identifiers, used by Alembic.
-revision = 'ce2d89d56ec0'
-down_revision = None
+revision = 'c34e657f37b6'
+down_revision = '07cc3c421205'
 branch_labels = None
 depends_on = None
 

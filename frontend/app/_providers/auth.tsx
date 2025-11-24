@@ -19,6 +19,8 @@ export type User = {
   tenantId: string;
   email: string;
   name?: string;
+  displayName?: string; // Added for compatibility
+  photoURL?: string;    // Added for compatibility
   role?: UserRole;
   token?: string; // future: backend JWT
 };
@@ -40,6 +42,7 @@ type AuthCtx = {
   login: (args: { tenantId: string; email: string; password: string }) => Promise<void>;
   loginWithOtp: (args: { tenantId: string; mobile: string; otp: string }) => Promise<void>; // future
   logout: () => void;
+  updateProfile: (patch: Partial<User>) => Promise<void>;
 };
 
 const AuthContext = createContext<AuthCtx | undefined>(undefined);
@@ -85,7 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  /* Username/Password login (mock now; swap with FastAPI later) */
+  /* Username/Password login (now calling FastAPI backend) */
   async function login({
     tenantId,
     email,
@@ -96,32 +99,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     password: string;
   }) {
     setLoading(true);
-    await new Promise((r) => setTimeout(r, 500)); // simulate API latency
 
-    const found = MOCK_USERS.find(
-      (u) =>
-        u.tenantId.trim() === tenantId.trim() &&
-        u.email.toLowerCase().trim() === email.toLowerCase().trim() &&
-        u.password === password
-    );
+    try {
+      // Call backend API
+      const API_BASE = process.env.NEXT_PUBLIC_API_BASE ?? 'http://localhost:8000';
+      const response = await fetch(`${API_BASE}/api/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          tenant_code: tenantId,
+          email: email,
+          password: password
+        })
+      });
 
-    if (!found) {
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ detail: 'Invalid credentials' }));
+        throw new Error(error.detail || 'Invalid credentials');
+      }
+
+      const data = await response.json();
+
+      // Store token and user info
+      const u: User = {
+        tenantId: tenantId,
+        email: email,
+        name: data.user?.name || data.user?.display_name || email.split('@')[0],
+        role: data.user?.role || 'dealer_admin', // ✅ CRITICAL: Include role from backend
+        token: data.access_token,
+      };
+
+      setUser(u);
+      localStorage.setItem('as360_user', JSON.stringify(u));
+      localStorage.setItem('as360_tenant', tenantId);
+      localStorage.setItem('as360_token', data.access_token); // CRITICAL: Store JWT token
       setLoading(false);
-      throw new Error('Invalid credentials or tenant');
+    } catch (error) {
+      setLoading(false);
+      throw error;
     }
-
-    const u: User = {
-      tenantId: found.tenantId,
-      email: found.email,
-      name: found.name,
-      role: found.role,
-      token: 'dev-mock-token',
-    };
-
-    setUser(u);
-    localStorage.setItem('as360_user', JSON.stringify(u));
-    localStorage.setItem('as360_tenant', found.tenantId);
-    setLoading(false);
   }
 
   /* OTP login placeholder (wire to FastAPI later) */
@@ -164,8 +180,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // localStorage.removeItem('as360_tenant');
   }
 
+  async function updateProfile(patch: Partial<User>) {
+    setUser((prev) => {
+      if (!prev) return null;
+      const updated = { ...prev, ...patch };
+      localStorage.setItem('as360_user', JSON.stringify(updated));
+      return updated;
+    });
+  }
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, loginWithOtp, logout }}>
+    <AuthContext.Provider value={{ user, loading, login, loginWithOtp, logout, updateProfile }}>
       {children}
     </AuthContext.Provider>
   );

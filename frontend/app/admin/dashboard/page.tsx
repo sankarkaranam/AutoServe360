@@ -10,13 +10,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { DealerManagement } from '@/components/admin/dealer-management';
 import { Button } from '@/components/ui/button';
-import { IndianRupee, Ticket, Users, CreditCard, Activity } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { StatCard } from '@/components/dashboard/stat-card';
-import { SalesChart } from '@/components/dashboard/sales-chart';
 import { SubscriptionManagement } from '@/components/admin/subscription-management';
 import { SupportTicketManagement } from '@/components/admin/support-ticket-management';
 import { ReportsDashboard } from '@/components/admin/reports-dashboard';
+import { AdminOverview } from '@/components/admin/admin-overview';
 import { useAuth } from '@/app/_providers/auth';
 
 function AdminDashboard() {
@@ -92,55 +89,7 @@ function AdminDashboard() {
           </TabsList>
 
           <TabsContent value="overview" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-              <StatCard
-                title="Total Revenue"
-                value="₹4,52,310"
-                icon={<IndianRupee className="h-4 w-4" />}
-                description="+5.2% from last month"
-              />
-              <StatCard
-                title="Active Subscriptions"
-                value="+75"
-                icon={<CreditCard className="h-4 w-4" />}
-                description="+12.1% from last month"
-              />
-              <StatCard
-                title="Total Dealers"
-                value="125"
-                icon={<Users className="h-4 w-4" />}
-                description="+5 from last month"
-              />
-              <StatCard
-                title="New Support Tickets"
-                value="15"
-                icon={<Ticket className="h-4 w-4" />}
-                description="+8 since yesterday"
-              />
-            </div>
-
-            <div className="grid grid-cols-1 gap-4 lg:grid-cols-7">
-              <div className="lg:col-span-4">
-                <SalesChart />
-              </div>
-              <div className="lg:col-span-3">
-                <Card>
-                  <CardHeader>
-                    <CardTitle className="font-headline flex items-center gap-2">
-                      <Activity /> Recent Signups
-                    </CardTitle>
-                    <CardDescription>New dealers who joined this week.</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2 text-sm text-muted-foreground">
-                      <p>Prestige Motors</p>
-                      <p>Galaxy Auto</p>
-                      <p>Sunrise Cars</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-            </div>
+            <AdminOverview />
           </TabsContent>
 
           <TabsContent value="dealers" className="space-y-4">

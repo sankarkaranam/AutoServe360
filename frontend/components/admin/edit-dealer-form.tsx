@@ -27,9 +27,7 @@ const formSchema = z.object({
   companyName: z.string().min(2, { message: 'Company name is required.' }),
   contactName: z.string().min(2, { message: 'Contact name is required.' }),
   contactEmail: z.string().email({ message: 'Invalid email address.' }),
-  subscriptionPlanId: z.string({
-    required_error: 'Please select a subscription plan.',
-  }),
+  subscriptionPlanId: z.string().min(1, { message: 'Please select a subscription plan.' }),
 });
 
 type EditDealerFormProps = {
@@ -49,7 +47,7 @@ export function EditDealerForm({ dealer, onFinished }: EditDealerFormProps) {
       subscriptionPlanId: '',
     },
   });
-  
+
   useEffect(() => {
     if (dealer) {
       form.reset({
@@ -107,7 +105,7 @@ export function EditDealerForm({ dealer, onFinished }: EditDealerFormProps) {
               <FormControl>
                 <Input type="email" readOnly disabled placeholder="e.g., rohan@example.com" {...field} />
               </FormControl>
-               <p className="text-xs text-muted-foreground pt-1">The login email cannot be changed.</p>
+              <p className="text-xs text-muted-foreground pt-1">The login email cannot be changed.</p>
               <FormMessage />
             </FormItem>
           )}

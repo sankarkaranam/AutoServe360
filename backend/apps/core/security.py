@@ -7,23 +7,26 @@ from typing import Any, Callable, Optional
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from passlib.context import CryptContext
 from pydantic import BaseModel, ValidationError
-
+import bcrypt
 from apps.core.config import settings
 
 # -----------------------------
 # Password hashing (bcrypt)
 # -----------------------------
-_pwd = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 def hash_password(plain: str) -> str:
-    return _pwd.hash(plain)
+    # bcrypt.hashpw returns bytes, we decode to store as string
+    pwd_bytes = plain.encode('utf-8')
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(pwd_bytes, salt)
+    return hashed.decode('utf-8')
 
 
 def verify_password(plain: str, hashed: str) -> bool:
-    return _pwd.verify(plain, hashed)
+    pwd_bytes = plain.encode('utf-8')
+    hashed_bytes = hashed.encode('utf-8')
+    return bcrypt.checkpw(pwd_bytes, hashed_bytes)
 
 
 # -----------------------------

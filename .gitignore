@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+venv/
+__pycache__/
+# Build outputs
+.next/
+dist/
+build/
+# Environment files
+.env
+.env.local
+.env.production
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+# OS
+.DS_Store
+Thumbs.db
+# Logs
+*.log
+backend.log
+# Database
+*.sqlite3
+*.db
+# Python
+*.pyc
+*.pyo
+*.pyd
+.Python
+# Backups
+backend/backups/

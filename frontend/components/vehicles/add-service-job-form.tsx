@@ -20,8 +20,8 @@ import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   jobDescription: z.string().min(10, { message: 'Description must be at least 10 characters.' }),
-  mileage: z.coerce.number().min(1, { message: 'Mileage must be greater than 0.' }),
-  date: z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Invalid date"}),
+  mileage: z.number().min(1, { message: 'Mileage must be greater than 0.' }),
+  date: z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Invalid date" }),
 });
 
 type AddServiceJobFormProps = {
@@ -45,12 +45,12 @@ export function AddServiceJobForm({ vehicle, onFinished }: AddServiceJobFormProp
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     setTimeout(() => {
-        onFinished(values);
-        toast({
-            title: 'Service Job Added',
-            description: `The service job has been successfully logged.`,
-        });
-        setIsLoading(false);
+      onFinished(values);
+      toast({
+        title: 'Service Job Added',
+        description: `The service job has been successfully logged.`,
+      });
+      setIsLoading(false);
     }, 1000)
   }
 
@@ -78,13 +78,18 @@ export function AddServiceJobForm({ vehicle, onFinished }: AddServiceJobFormProp
               <FormItem>
                 <FormLabel>Vehicle Mileage (km)</FormLabel>
                 <FormControl>
-                  <Input type="number" placeholder="e.g., 55,000" {...field} />
+                  <Input
+                    type="number"
+                    placeholder="e.g., 55,000"
+                    {...field}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
-           <FormField
+          <FormField
             control={form.control}
             name="date"
             render={({ field }) => (

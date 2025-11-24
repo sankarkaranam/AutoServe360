@@ -20,8 +20,9 @@ import { Input } from '@/components/ui/input';
 
 const formSchema = z.object({
   item: z.string().min(2, { message: 'Item name is required.' }),
-  quantity: z.coerce.number().min(1, { message: 'Quantity must be at least 1.' }),
-  rate: z.coerce.number().min(0, { message: 'Rate must be a positive number.' }),
+  quantity: z.number().min(1, { message: 'Quantity must be at least 1.' }),
+  rate: z.number().min(0, { message: 'Rate must be a positive number.' }),
+  productId: z.string().optional().nullable(),
 });
 
 export type InvoiceItem = z.infer<typeof formSchema>;
@@ -46,9 +47,9 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
     setIsLoading(true);
     // Simulate a short delay for UX
     setTimeout(() => {
-        onAddItem(values);
-        form.reset();
-        setIsLoading(false);
+      onAddItem(values);
+      form.reset();
+      setIsLoading(false);
     }, 500);
   }
 
@@ -76,7 +77,11 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
               <FormItem>
                 <FormLabel>Quantity</FormLabel>
                 <FormControl>
-                  <Input type="number" {...field} />
+                  <Input
+                    type="number"
+                    {...field}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -89,7 +94,12 @@ export function AddItemForm({ onAddItem }: AddItemFormProps) {
               <FormItem>
                 <FormLabel>Rate (₹)</FormLabel>
                 <FormControl>
-                  <Input type="number" step="0.01" {...field} />
+                  <Input
+                    type="number"
+                    step="0.01"
+                    {...field}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>

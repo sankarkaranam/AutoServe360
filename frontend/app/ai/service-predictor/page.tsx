@@ -19,8 +19,8 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '
 
 const formSchema = z.object({
   lastServiceDate: z.string().refine((val) => !isNaN(Date.parse(val)), { message: "Please select a valid date." }),
-  currentMileage: z.coerce.number().min(1, { message: 'Mileage must be greater than 0.' }),
-  typicalUsagePattern: z.string({ required_error: 'Please select a usage pattern.' }),
+  currentMileage: z.number().min(1, { message: 'Mileage must be greater than 0.' }),
+  typicalUsagePattern: z.string().min(1, { message: 'Please select a usage pattern.' }),
   vehicleModel: z.string().min(2, { message: 'Vehicle model is required.' }),
 });
 
@@ -28,13 +28,14 @@ function ServicePredictorCorePage() {
   const [result, setResult] = useState<PredictServiceReminderOutput | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       lastServiceDate: '',
       currentMileage: 0,
       vehicleModel: '',
+      typicalUsagePattern: '',
     },
   });
 
@@ -72,93 +73,98 @@ function ServicePredictorCorePage() {
               Predict the next optimal service date for a vehicle based on its history and usage.
             </p>
           </div>
-          
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(handlePredictService)} className="space-y-6">
-                <Card>
-                    <CardHeader>
-                    <CardTitle>1. Enter Vehicle Details</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormField
-                                control={form.control}
-                                name="vehicleModel"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Vehicle Model</FormLabel>
-                                        <FormControl>
-                                            <Input placeholder="e.g., Hero Splendor+" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
+              <Card>
+                <CardHeader>
+                  <CardTitle>1. Enter Vehicle Details</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="vehicleModel"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Vehicle Model</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g., Hero Splendor+" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="lastServiceDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Last Service Date</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={form.control}
+                      name="currentMileage"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Current Mileage (in km)</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="e.g., 25000"
+                              {...field}
+                              onChange={(e) => field.onChange(Number(e.target.value))}
                             />
-                            <FormField
-                                control={form.control}
-                                name="lastServiceDate"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Last Service Date</FormLabel>
-                                        <FormControl>
-                                            <Input type="date" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <FormField
-                                control={form.control}
-                                name="currentMileage"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Current Mileage (in km)</FormLabel>
-                                        <FormControl>
-                                            <Input type="number" placeholder="e.g., 25000" {...field} />
-                                        </FormControl>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                             <FormField
-                                control={form.control}
-                                name="typicalUsagePattern"
-                                render={({ field }) => (
-                                    <FormItem>
-                                        <FormLabel>Typical Usage Pattern</FormLabel>
-                                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                            <FormControl>
-                                                <SelectTrigger>
-                                                <SelectValue placeholder="Select a usage pattern" />
-                                                </SelectTrigger>
-                                            </FormControl>
-                                            <SelectContent>
-                                                <SelectItem value="daily-commute">Daily Commute (City)</SelectItem>
-                                                <SelectItem value="long-distance">Long Distance (Highway)</SelectItem>
-                                                <SelectItem value="weekend-trips">Occasional / Weekend Trips</SelectItem>
-                                                 <SelectItem value="mixed-use">Mixed Usage</SelectItem>
-                                            </SelectContent>
-                                        </Select>
-                                        <FormMessage />
-                                    </FormItem>
-                                )}
-                            />
-                        </div>
-                    </CardContent>
-                </Card>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="typicalUsagePattern"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Typical Usage Pattern</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a usage pattern" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="daily-commute">Daily Commute (City)</SelectItem>
+                              <SelectItem value="long-distance">Long Distance (Highway)</SelectItem>
+                              <SelectItem value="weekend-trips">Occasional / Weekend Trips</SelectItem>
+                              <SelectItem value="mixed-use">Mixed Usage</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                </CardContent>
+              </Card>
 
-                <div className="flex justify-center">
-                    <Button type="submit" disabled={isLoading}>
-                    {isLoading ? (
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
-                        <Bot className="mr-2 h-4 w-4" />
-                    )}
-                    Predict Next Service Date
-                    </Button>
-                </div>
+              <div className="flex justify-center">
+                <Button type="submit" disabled={isLoading}>
+                  {isLoading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Bot className="mr-2 h-4 w-4" />
+                  )}
+                  Predict Next Service Date
+                </Button>
+              </div>
             </form>
           </Form>
 
@@ -191,7 +197,7 @@ function ServicePredictorCorePage() {
                 </div>
                 <Separator />
                 <div>
-                  <h3 className="font-semibold mb-2 flex items-center gap-2"><Lightbulb className="h-5 w-5"/>Reasoning</h3>
+                  <h3 className="font-semibold mb-2 flex items-center gap-2"><Lightbulb className="h-5 w-5" />Reasoning</h3>
                   <p className="text-sm text-muted-foreground p-4 border rounded-md bg-background">
                     {result.reasoning}
                   </p>
@@ -206,14 +212,14 @@ function ServicePredictorCorePage() {
 }
 
 export default function ServicePredictorPage() {
-    return (
-        <SidebarProvider>
-            <div className="flex min-h-screen w-full">
-                <AppSidebar />
-                <SidebarInset>
-                    <ServicePredictorCorePage />
-                </SidebarInset>
-            </div>
-        </SidebarProvider>
-    );
+  return (
+    <SidebarProvider>
+      <div className="flex min-h-screen w-full">
+        <AppSidebar />
+        <SidebarInset>
+          <ServicePredictorCorePage />
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
+  );
 }

@@ -15,10 +15,10 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { type InventoryItem } from './inventory-management';
+import { type InventoryItem } from '@/components/pos/types';
 
 const formSchema = z.object({
-  newStock: z.coerce.number().min(0, { message: 'Stock cannot be negative.' }),
+  newStock: z.number().min(0, { message: 'Stock cannot be negative.' }),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -30,7 +30,7 @@ type AdjustStockFormProps = {
 
 export function AdjustStockFirestoreForm({ item, onFinished }: AdjustStockFormProps) {
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -48,8 +48,8 @@ export function AdjustStockFirestoreForm({ item, onFinished }: AdjustStockFormPr
   function onSubmit(values: FormValues) {
     setIsLoading(true);
     setTimeout(() => {
-        onFinished(values.newStock);
-        setIsLoading(false);
+      onFinished(values.newStock);
+      setIsLoading(false);
     }, 1000);
   }
 
@@ -57,8 +57,8 @@ export function AdjustStockFirestoreForm({ item, onFinished }: AdjustStockFormPr
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="rounded-md border bg-muted p-4 text-center">
-            <p className="text-sm text-muted-foreground">Current Stock</p>
-            <p className="text-2xl font-bold">{item.stock}</p>
+          <p className="text-sm text-muted-foreground">Current Stock</p>
+          <p className="text-2xl font-bold">{item.stock}</p>
         </div>
         <FormField
           control={form.control}
@@ -67,7 +67,11 @@ export function AdjustStockFirestoreForm({ item, onFinished }: AdjustStockFormPr
             <FormItem>
               <FormLabel>New Stock Quantity</FormLabel>
               <FormControl>
-                <Input type="number" {...field} />
+                <Input
+                  type="number"
+                  {...field}
+                  onChange={(e) => field.onChange(Number(e.target.value))}
+                />
               </FormControl>
               <FormMessage />
             </FormItem>

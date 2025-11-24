@@ -19,7 +19,7 @@ import { Input } from '@/components/ui/input';
 const formSchema = z.object({
   make: z.string().min(2, { message: 'Vehicle make is required.' }),
   model: z.string().min(2, { message: 'Vehicle model is required.' }),
-  year: z.coerce.number().min(1900, { message: 'Invalid year.' }),
+  year: z.number().min(1900, { message: 'Invalid year.' }),
   vin: z.string().min(10, { message: 'VIN is required.' }),
   registrationNumber: z.string().min(4, { message: 'Registration number is required.' }),
   engineNumber: z.string().optional(),
@@ -48,110 +48,115 @@ export function AddVehicleForm({ customerId, onFinished }: AddVehicleFormProps) 
   function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     setTimeout(() => {
-        onFinished(values);
-        setIsLoading(false);
+      onFinished(values);
+      setIsLoading(false);
     }, 1000);
   }
 
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-         <div className="grid grid-cols-2 gap-4">
-            <FormField
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
             control={form.control}
             name="make"
             render={({ field }) => (
-                <FormItem>
+              <FormItem>
                 <FormLabel>Make</FormLabel>
                 <FormControl>
-                    <Input placeholder="e.g., Maruti Suzuki" {...field} />
+                  <Input placeholder="e.g., Maruti Suzuki" {...field} />
                 </FormControl>
                 <FormMessage />
-                </FormItem>
+              </FormItem>
             )}
-            />
-             <FormField
+          />
+          <FormField
             control={form.control}
             name="model"
             render={({ field }) => (
-                <FormItem>
+              <FormItem>
                 <FormLabel>Model</FormLabel>
                 <FormControl>
-                    <Input placeholder="e.g., Swift" {...field} />
+                  <Input placeholder="e.g., Swift" {...field} />
                 </FormControl>
                 <FormMessage />
-                </FormItem>
+              </FormItem>
             )}
-            />
+          />
         </div>
         <div className="grid grid-cols-2 gap-4">
-            <FormField
+          <FormField
             control={form.control}
             name="year"
             render={({ field }) => (
-                <FormItem>
+              <FormItem>
                 <FormLabel>Year</FormLabel>
                 <FormControl>
-                    <Input type="number" placeholder="e.g., 2022" {...field} />
+                  <Input
+                    type="number"
+                    placeholder="e.g., 2022"
+                    {...field}
+                    onChange={(e) => field.onChange(Number(e.target.value))}
+                  />
                 </FormControl>
                 <FormMessage />
-                </FormItem>
+              </FormItem>
             )}
-            />
-             <FormField
+          />
+          <FormField
             control={form.control}
             name="purchaseDate"
             render={({ field }) => (
-                <FormItem>
+              <FormItem>
                 <FormLabel>Date of Purchase</FormLabel>
                 <FormControl>
-                    <Input type="date" {...field} />
+                  <Input type="date" {...field} />
                 </FormControl>
                 <FormMessage />
-                </FormItem>
+              </FormItem>
             )}
-            />
+          />
         </div>
         <FormField
-            control={form.control}
-            name="registrationNumber"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Registration No.</FormLabel>
-                <FormControl>
-                    <Input placeholder="e.g., DL1CX1234" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
+          control={form.control}
+          name="registrationNumber"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Registration No.</FormLabel>
+              <FormControl>
+                <Input placeholder="e.g., DL1CX1234" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-         <FormField
-            control={form.control}
-            name="vin"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>VIN</FormLabel>
-                <FormControl>
-                    <Input placeholder="Vehicle Identification Number" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
-            />
         <FormField
-            control={form.control}
-            name="engineNumber"
-            render={({ field }) => (
-                <FormItem>
-                <FormLabel>Engine No. (Optional)</FormLabel>
-                <FormControl>
-                    <Input placeholder="Engine Number" {...field} />
-                </FormControl>
-                <FormMessage />
-                </FormItem>
-            )}
+          control={form.control}
+          name="vin"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>VIN</FormLabel>
+              <FormControl>
+                <Input placeholder="Vehicle Identification Number" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
         />
-        
+        <FormField
+          control={form.control}
+          name="engineNumber"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Engine No. (Optional)</FormLabel>
+              <FormControl>
+                <Input placeholder="Engine Number" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
         <div className="flex justify-end pt-4">
           <Button type="submit" disabled={isLoading}>
             {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

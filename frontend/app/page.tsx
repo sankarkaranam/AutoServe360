@@ -1,9 +1,8 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Clock, IndianRupee, UserPlus, Wrench } from 'lucide-react';
-import { isToday } from 'date-fns';
 
 import { ActivityFeed } from '@/components/dashboard/activity-feed';
 import { AssistantCard } from '@/components/dashboard/assistant-card';
@@ -14,21 +13,33 @@ import { AppSidebar } from '@/components/layout/app-sidebar';
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar';
 import { Skeleton } from '@/components/ui/skeleton';
 
-import { useTransactionStore } from '@/lib/transaction-store';
 import { useAuth } from '@/app/_providers/auth';
+import { getDashboardStats, type DashboardStats } from '@/components/dashboard/data';
 
 function DealerDashboardInner() {
   const router = useRouter();
   const { user, loading } = useAuth();
-  const { transactions } = useTransactionStore();
+  const [dashboardData, setDashboardData] = useState<DashboardStats | null>(null);
+  const [dataLoading, setDataLoading] = useState(true);
 
-  // Compute today's sales from local store (demo data)
-  const todaysSales = useMemo(() => {
-    if (!transactions) return 0;
-    return transactions
-      .filter((tx) => isToday(new Date(tx.date)))
-      .reduce((sum, tx) => sum + tx.amount, 0);
-  }, [transactions]);
+  // Fetch dashboard stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setDataLoading(true);
+        const data = await getDashboardStats();
+        setDashboardData(data);
+      } catch (error) {
+        console.error('Failed to fetch dashboard stats:', error);
+      } finally {
+        setDataLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchStats();
+    }
+  }, [user]);
 
   // Redirect unauthenticated users to dealer login
   useEffect(() => {
@@ -64,33 +75,33 @@ function DealerDashboardInner() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Today's Sales"
-            value={`₹${todaysSales.toLocaleString('en-IN')}`}
+            value={dataLoading ? '...' : `₹${dashboardData?.today_sales.toLocaleString('en-IN') || '0'}`}
             icon={<IndianRupee className="h-4 w-4" />}
-            description="+20.1% from last month"
+            description={dataLoading ? 'Loading...' : `${dashboardData?.today_sales || 0 > 0 ? 'Active sales today' : 'No sales yet today'}`}
           />
           <StatCard
             title="New Leads"
-            value="+45"
+            value={dataLoading ? '...' : `+${dashboardData?.new_leads || '0'}`}
             icon={<UserPlus className="h-4 w-4" />}
-            description="+180.1% from last month"
+            description={dataLoading ? 'Loading...' : 'Last 30 days'}
           />
           <StatCard
             title="Open Job Cards"
-            value="12"
+            value="0"
             icon={<Wrench className="h-4 w-4" />}
-            description="+19% from last month"
+            description="Coming soon"
           />
           <StatCard
             title="Pending Payments"
-            value="₹23,150"
+            value={dataLoading ? '...' : `₹${dashboardData?.pending_payments.toLocaleString('en-IN') || '0'}`}
             icon={<Clock className="h-4 w-4" />}
-            description="+2 from yesterday"
+            description={dataLoading ? 'Loading...' : 'Unpaid invoices'}
           />
         </div>
 
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-7">
           <div className="lg:col-span-4">
-            <SalesChart />
+            <SalesChart data={dashboardData?.sales_overview || []} loading={dataLoading} />
           </div>
           <div className="lg:col-span-3">
             <AssistantCard />
@@ -98,7 +109,7 @@ function DealerDashboardInner() {
         </div>
 
         <div className="grid grid-cols-1 gap-4">
-          <ActivityFeed />
+          <ActivityFeed activities={dashboardData?.recent_activity || []} loading={dataLoading} />
         </div>
       </main>
     </>

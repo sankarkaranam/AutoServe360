@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useAuth } from '@/app/context/auth-context';
+import { useAuth } from '@/app/_providers/auth';
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -43,7 +43,7 @@ export function ProfileSettings() {
   useEffect(() => {
     if (user) {
       form.reset({
-        displayName: user.displayName || '',
+        displayName: user.displayName || user.name || '',
         email: user.email || '',
       });
       setSelectedPhotoUrl(user.photoURL || null);

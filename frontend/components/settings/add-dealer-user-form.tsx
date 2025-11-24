@@ -28,7 +28,7 @@ const formSchema = z.object({
   firstName: z.string().min(2, { message: 'First name is required.' }),
   lastName: z.string().min(2, { message: 'Last name is required.' }),
   email: z.string().email({ message: 'Invalid email address.' }),
-  role: z.string({ required_error: 'Please select a role.' }),
+  role: z.string().min(1, { message: 'Please select a role.' }),
 });
 
 type AddDealerUserFormProps = {
@@ -38,7 +38,7 @@ type AddDealerUserFormProps = {
 export function AddDealerUserForm({ onFinished }: AddDealerUserFormProps) {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
-  
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -53,12 +53,12 @@ export function AddDealerUserForm({ onFinished }: AddDealerUserFormProps) {
     setIsLoading(true);
 
     setTimeout(() => {
-        toast({
-            title: 'User Added & Invite Sent',
-            description: `${values.firstName} ${values.lastName} has been created. A password setup email has been sent to them.`,
-        });
-        onFinished();
-        setIsLoading(false);
+      toast({
+        title: 'User Added & Invite Sent',
+        description: `${values.firstName} ${values.lastName} has been created. A password setup email has been sent to them.`,
+      });
+      onFinished();
+      setIsLoading(false);
     }, 1000)
   }
 
@@ -66,32 +66,32 @@ export function AddDealerUserForm({ onFinished }: AddDealerUserFormProps) {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
-            <FormField
+          <FormField
             control={form.control}
             name="firstName"
             render={({ field }) => (
-                <FormItem>
+              <FormItem>
                 <FormLabel>First Name</FormLabel>
                 <FormControl>
-                    <Input placeholder="e.g., Priya" {...field} />
+                  <Input placeholder="e.g., Priya" {...field} />
                 </FormControl>
                 <FormMessage />
-                </FormItem>
+              </FormItem>
             )}
-            />
-             <FormField
+          />
+          <FormField
             control={form.control}
             name="lastName"
             render={({ field }) => (
-                <FormItem>
+              <FormItem>
                 <FormLabel>Last Name</FormLabel>
                 <FormControl>
-                    <Input placeholder="e.g., Singh" {...field} />
+                  <Input placeholder="e.g., Singh" {...field} />
                 </FormControl>
                 <FormMessage />
-                </FormItem>
+              </FormItem>
             )}
-            />
+          />
         </div>
         <FormField
           control={form.control}

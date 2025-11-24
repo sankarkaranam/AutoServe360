@@ -28,9 +28,7 @@ const formSchema = z.object({
   companyName: z.string().min(2, { message: 'Company name is required.' }),
   contactName: z.string().min(2, { message: 'Contact name is required.' }),
   contactEmail: z.string().email({ message: 'Invalid email address.' }),
-  subscriptionPlanId: z.string({
-    required_error: 'Please select a subscription plan.',
-  }),
+  subscriptionPlanId: z.string().min(1, { message: 'Please select a subscription plan.' }),
 });
 
 type AddDealerFormProps = {
@@ -52,8 +50,8 @@ export function AddDealerForm({ onFinished }: AddDealerFormProps) {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     setTimeout(() => {
-        onFinished(values);
-        setIsLoading(false);
+      onFinished(values);
+      setIsLoading(false);
     }, 1000);
   }
 

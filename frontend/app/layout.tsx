@@ -26,7 +26,7 @@ export default function RootLayout({
         />
       </head>
 
-      <body className="h-full">
+      <body className="h-full" suppressHydrationWarning>
         <Providers>
           {children}
           <Toaster />

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { useAuth } from '@/app/context/auth-context'; // <-- from your provider
+import { useAuth } from '@/app/_providers/auth'; // <-- from your provider
 import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from '@/components/ui/table';

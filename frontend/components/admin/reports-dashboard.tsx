@@ -1,252 +1,205 @@
 'use client';
-import { useState } from 'react';
-import { addDays, format } from 'date-fns';
-import type { DateRange } from 'react-day-picker';
-import { Bar, BarChart, CartesianGrid, Line, LineChart, Pie, PieChart, ResponsiveContainer, Tooltip, XAxis, YAxis, Legend, Cell } from 'recharts';
-
+import { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { IndianRupee, Users, Package, BarChart as BarChartIcon, Calendar as CalendarIcon } from 'lucide-react';
-import { StatCard } from '@/components/dashboard/stat-card';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Badge } from '../ui/badge';
+import { Skeleton } from '../ui/skeleton';
+import { useToast } from '@/hooks/use-toast';
+import { api } from '@/lib/api';
+import { IndianRupee, Users, TrendingUp, AlertCircle, Loader2, RefreshCw } from 'lucide-react';
+import { Button } from '../ui/button';
 
+interface AdminStats {
+  total_dealers: number;
+  active_dealers: number;
+  inactive_dealers: number;
+  dealers_by_plan: Record<string, number>;
+  total_revenue: number;
+  monthly_revenue: number;
+  expiring_soon: number;
+  new_signups_this_month: number;
+}
 
-const revenueData = [
-  { month: 'Jan', revenue: 110000 },
-  { month: 'Feb', revenue: 95000 },
-  { month: 'Mar', revenue: 120000 },
-  { month: 'Apr', revenue: 135000 },
-  { month: 'May', revenue: 125000 },
-  { month: 'Jun', revenue: 150000 },
-];
-
-const newDealersData = [
-  { month: 'Jan', count: 8 },
-  { month: 'Feb', count: 10 },
-  { month: 'Mar', count: 7 },
-  { month: 'Apr', count: 12 },
-  { month: 'May', count: 15 },
-  { month: 'Jun', count: 11 },
-]
-
-const planDistributionData = [
-    { name: 'Basic', value: 45, color: 'hsl(var(--chart-1))' },
-    { name: 'Standard', value: 55, color: 'hsl(var(--chart-2))' },
-    { name: 'Premium', value: 25, color: 'hsl(var(--chart-3))' },
-];
-
-const recentTransactions = [
-    { id: 'TXN-001', dealer: 'Prestige Motors', plan: 'Premium', amount: 2999, date: '2024-07-22' },
-    { id: 'TXN-002', dealer: 'Galaxy Auto', plan: 'Standard', amount: 1999, date: '2024-07-21' },
-    { id: 'TXN-003', dealer: 'Sunrise Cars', plan: 'Basic', amount: 999, date: '2024-07-21' },
-    { id: 'TXN-004', dealer: 'Deccan Wheels', plan: 'Premium', amount: 2999, date: '2024-07-20' },
-];
-
-const newSignups = [
-    { dealer: 'Cyber Auto', plan: 'Standard', date: '2024-07-22' },
-    { dealer: 'Pearl Motors', plan: 'Basic', date: '2024-07-20' },
-    { dealer: 'Charminar Cars', plan: 'Premium', date: '2024-07-19' },
-]
+interface RevenueTrend {
+  month: string;
+  revenue: number;
+}
 
 export function ReportsDashboard() {
-  const [date, setDate] = useState<DateRange | undefined>({
-    from: addDays(new Date(), -29),
-    to: new Date(),
-  });
+  const [stats, setStats] = useState<AdminStats | null>(null);
+  const [revenueTrend, setRevenueTrend] = useState<RevenueTrend[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { toast } = useToast();
+
+  const fetchData = async () => {
+    try {
+      setIsRefreshing(true);
+      const [statsData, trendData] = await Promise.all([
+        api<AdminStats>('/api/v1/saas/reports/stats'),
+        api<RevenueTrend[]>('/api/v1/saas/reports/revenue-trend?months=6')
+      ]);
+      setStats(statsData);
+      setRevenueTrend(trendData);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to load reports. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+      setIsRefreshing(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  if (isLoading) {
+    return (
+      <div className="space-y-4">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <Skeleton className="h-4 w-24" />
+                <Skeleton className="h-4 w-4" />
+              </CardHeader>
+              <CardContent>
+                <Skeleton className="h-8 w-32" />
+                <Skeleton className="h-3 w-40 mt-2" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (!stats) return null;
 
   return (
     <div className="space-y-4">
-      <Card>
-        <CardHeader>
-          <div className="flex flex-col md:flex-row justify-between md:items-center gap-4">
-            <div>
-                <CardTitle>Reports and Analytics</CardTitle>
-                <CardDescription>
-                    Detailed insights into platform performance and financial metrics.
-                </CardDescription>
-            </div>
-             <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  id="date"
-                  variant={'outline'}
-                  className={cn(
-                    'w-full md:w-[300px] justify-start text-left font-normal',
-                    !date && 'text-muted-foreground'
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {date?.from ? (
-                    date.to ? (
-                      <>
-                        {format(date.from, 'LLL dd, y')} -{' '}
-                        {format(date.to, 'LLL dd, y')}
-                      </>
-                    ) : (
-                      format(date.from, 'LLL dd, y')
-                    )
-                  ) : (
-                    <span>Pick a date</span>
-                  )}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="end">
-                <Calendar
-                  initialFocus
-                  mode="range"
-                  defaultMonth={date?.from}
-                  selected={date}
-                  onSelect={setDate}
-                  numberOfMonths={2}
-                />
-              </PopoverContent>
-            </Popover>
-          </div>
-        </CardHeader>
-      </Card>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <StatCard
-          title="Total Revenue"
-          value="₹7,40,000"
-          icon={<IndianRupee className="h-4 w-4" />}
-          description="+11.5% from last period"
-        />
-        <StatCard
-          title="New Dealers"
-          value="+63"
-          icon={<Users className="h-4 w-4" />}
-          description="+18.2% from last period"
-        />
-        <StatCard
-          title="Avg. Revenue Per Dealer"
-          value="₹5,920"
-          icon={<Package className="h-4 w-4" />}
-          description="Across all active dealers"
-        />
-        <StatCard
-          title="Churn Rate"
-          value="1.2%"
-          icon={<BarChartIcon className="h-4 w-4" />}
-          description="-0.5% from last period"
-        />
-      </div>
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-         <Card>
-            <CardHeader>
-                <CardTitle>Revenue Over Time</CardTitle>
-                <CardDescription>Monthly revenue generated from subscriptions.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                    <BarChart data={revenueData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" fontSize={12} tickLine={false} axisLine={false} />
-                        <YAxis tickFormatter={(value) => `₹${Number(value) / 1000}k`} fontSize={12} tickLine={false} axisLine={false}/>
-                        <Tooltip cursor={{ fill: 'hsl(var(--muted))' }} formatter={(value: number) => `₹${value.toLocaleString('en-IN')}`} />
-                        <Legend />
-                        <Bar dataKey="revenue" fill="hsl(var(--primary))" name="Revenue" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                </ResponsiveContainer>
-            </CardContent>
-         </Card>
-          <Card>
-            <CardHeader>
-                <CardTitle>New Dealers Trend</CardTitle>
-                <CardDescription>Number of new dealers joining each month.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                    <LineChart data={newDealersData}>
-                        <CartesianGrid strokeDasharray="3 3" />
-                        <XAxis dataKey="month" fontSize={12} tickLine={false} axisLine={false} />
-                        <YAxis fontSize={12} tickLine={false} axisLine={false}/>
-                        <Tooltip />
-                        <Legend />
-                        <Line type="monotone" dataKey="count" name="New Dealers" stroke="hsl(var(--primary))" strokeWidth={2} />
-                    </LineChart>
-                </ResponsiveContainer>
-            </CardContent>
-         </Card>
+      <div className="flex justify-between items-center">
+        <h3 className="text-2xl font-bold">Reports & Analytics</h3>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => fetchData()}
+          disabled={isRefreshing}
+        >
+          {isRefreshing ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <RefreshCw className="h-3.5 w-3.5" />
+          )}
+          <span className="ml-2">Refresh</span>
+        </Button>
       </div>
 
-       <div className="grid grid-cols-1 gap-4 lg:grid-cols-5">
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle>Plan Distribution</CardTitle>
-            <CardDescription>Breakdown of active dealers by subscription plan.</CardDescription>
+      {/* Key Metrics */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <IndianRupee className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <ResponsiveContainer width="100%" height={250}>
-              <PieChart>
-                <Pie data={planDistributionData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label>
-                   {planDistributionData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+            <div className="text-2xl font-bold">₹{stats.total_revenue.toLocaleString()}</div>
+            <p className="text-xs text-muted-foreground">
+              ₹{stats.monthly_revenue.toLocaleString()} this month
+            </p>
           </CardContent>
         </Card>
-        <Card className="lg:col-span-3">
-          <CardHeader className='p-4'>
-            <Tabs defaultValue="transactions">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="transactions">Recent Transactions</TabsTrigger>
-                <TabsTrigger value="signups">New Signups</TabsTrigger>
-              </TabsList>
-              <TabsContent value="transactions" className='mt-4'>
-                 <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Dealer</TableHead>
-                            <TableHead>Plan</TableHead>
-                            <TableHead>Date</TableHead>
-                            <TableHead className='text-right'>Amount</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {recentTransactions.map(tx => (
-                            <TableRow key={tx.id}>
-                                <TableCell className="font-medium">{tx.dealer}</TableCell>
-                                <TableCell><Badge variant="outline">{tx.plan}</Badge></TableCell>
-                                <TableCell>{format(new Date(tx.date), 'dd MMM yyyy')}</TableCell>
-                                <TableCell className='text-right'>₹{tx.amount.toLocaleString('en-IN')}</TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                 </Table>
-              </TabsContent>
-              <TabsContent value="signups" className='mt-4'>
-                 <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Dealer</TableHead>
-                            <TableHead>Plan</TableHead>
-                            <TableHead>Signup Date</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {newSignups.map(signup => (
-                            <TableRow key={signup.dealer}>
-                                <TableCell className="font-medium">{signup.dealer}</TableCell>
-                                <TableCell><Badge variant="outline">{signup.plan}</Badge></TableCell>
-                                <TableCell>{format(new Date(signup.date), 'dd MMM yyyy')}</TableCell>
-                            </TableRow>
-                        ))}
-                    </TableBody>
-                 </Table>
-              </TabsContent>
-            </Tabs>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Total Dealers</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{stats.total_dealers}</div>
+            <p className="text-xs text-muted-foreground">
+              {stats.active_dealers} active, {stats.inactive_dealers} inactive
+            </p>
+          </CardContent>
         </Card>
-       </div>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">New Signups</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">+{stats.new_signups_this_month}</div>
+            <p className="text-xs text-muted-foreground">
+              This month
+            </p>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">Expiring Soon</CardTitle>
+            <AlertCircle className="h-4 w-4 text-orange-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-orange-600">{stats.expiring_soon}</div>
+            <p className="text-xs text-muted-foreground">
+              Next 30 days
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Dealers by Plan */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Dealers by Plan</CardTitle>
+          <CardDescription>Distribution of dealers across subscription plans</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {Object.entries(stats.dealers_by_plan).map(([plan, count]) => {
+              const percentage = (count / stats.total_dealers) * 100;
+              return (
+                <div key={plan} className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium capitalize">{plan || 'No Plan'}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {count} ({percentage.toFixed(1)}%)
+                    </span>
+                  </div>
+                  <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                    <div
+                      className="h-full bg-primary transition-all"
+                      style={{ width: `${percentage}%` }}
+                    />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Revenue Trend */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Revenue Trend</CardTitle>
+          <CardDescription>Monthly revenue for the last 6 months</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {revenueTrend.map((item) => (
+              <div key={item.month} className="flex items-center justify-between">
+                <span className="text-sm font-medium">{item.month}</span>
+                <span className="text-sm font-bold">₹{item.revenue.toLocaleString()}</span>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
